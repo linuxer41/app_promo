@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Resto — Anuncio v3</title>
-<link rel="stylesheet" href="css/v3.css" />
+<link rel="stylesheet" href="css/v3.css?v=4" />
 </head>
 <body>
   <aside class="tools">
@@ -28,12 +28,17 @@
       </div>
     </div>
     <hr />
+    <div class="tool-group">
+      <span>Cámara</span>
+      <label class="slider"><span>Acercar / alejar</span><b id="cam-zoom-v">0</b><input type="range" id="cam-zoom" min="-100" max="100" step="1" value="0" /></label>
+      <button id="cam-reset">Restablecer</button>
+    </div>
+    <hr />
     <div class="tool-group" id="model-tools" hidden>
       <span id="model-tools-title">Ajustar modelo</span>
       <label class="slider"><span>Rotar X</span><b id="rot-x-v">0&deg;</b><input type="range" id="rot-x" min="-180" max="180" step="1" value="0" /></label>
       <label class="slider"><span>Rotar Y</span><b id="rot-y-v">0&deg;</b><input type="range" id="rot-y" min="-180" max="180" step="1" value="0" /></label>
       <label class="slider"><span>Rotar Z</span><b id="rot-z-v">0&deg;</b><input type="range" id="rot-z" min="-180" max="180" step="1" value="0" /></label>
-      <label class="slider"><span>Acercar / alejar</span><b id="zoom-v">0</b><input type="range" id="zoom" min="-2.5" max="2.5" step="0.05" value="0" /></label>
       <button id="model-reset">Restablecer</button>
     </div>
     <hr />
@@ -104,6 +109,6 @@
   <script src="libs/three.min.js"></script>
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/html-to-image.js"></script>
-  <script src="js/v3.js"></script>
+  <script src="js/v3.js?v=4"></script>
 </body>
 </html>

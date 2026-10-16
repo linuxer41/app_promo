@@ -236,7 +236,7 @@
         pivot: pivot, root: root, screen: screen,
         half: { x: sz.x / 2, y: sz.y / 2 },
         offset: { x: 0, y: 0 },
-        adj: { rx: 0, ry: 0, rz: 0, dz: 0 },
+        adj: { rx: 0, ry: 0, rz: 0 },
         slotP: { x: 0, y: 0, z: 0 }, slotS: 1
       };
       deviceOrder.push(id);
@@ -437,8 +437,8 @@
       var d = devices[key];
       var g = d.pivot.userData.goal;
       if (!g) return;
-      var a = d.adj || { rx: 0, ry: 0, rz: 0, dz: 0 };
-      d.pivot.position.lerp(new THREE.Vector3(g.p[0], g.p[1], g.p[2] + a.dz), 0.12);
+      var a = d.adj || { rx: 0, ry: 0, rz: 0 };
+      d.pivot.position.lerp(new THREE.Vector3(g.p[0], g.p[1], g.p[2]), 0.12);
       d.pivot.rotation.x += (a.rx - d.pivot.rotation.x) * 0.12;
       d.pivot.rotation.y += ((g.ry + a.ry) - d.pivot.rotation.y) * 0.12;
       d.pivot.rotation.z += (a.rz - d.pivot.rotation.z) * 0.12;
@@ -453,6 +453,12 @@
       stage.position.y += (sg.y - stage.position.y) * 0.12;
     }
     stage.position.y += Math.sin(t * 1.1) * 0.0016;
+
+    // zoom de cámara (lente/FOV)
+    if (typeof camGoalFov === 'number') {
+      camera.fov += (camGoalFov - camera.fov) * 0.12;
+      camera.updateProjectionMatrix();
+    }
 
     // giro por arrastre
     drag.ry += (drag.tRy - drag.ry) * 0.08;
@@ -622,14 +628,12 @@
   var sliders = {
     rx: document.getElementById('rot-x'),
     ry: document.getElementById('rot-y'),
-    rz: document.getElementById('rot-z'),
-    dz: document.getElementById('zoom')
+    rz: document.getElementById('rot-z')
   };
   var outs = {
     rx: document.getElementById('rot-x-v'),
     ry: document.getElementById('rot-y-v'),
-    rz: document.getElementById('rot-z-v'),
-    dz: document.getElementById('zoom-v')
+    rz: document.getElementById('rot-z-v')
   };
 
   function currentAdj() {
@@ -641,7 +645,6 @@
     outs.rx.textContent = sliders.rx.value + '\u00B0';
     outs.ry.textContent = sliders.ry.value + '\u00B0';
     outs.rz.textContent = sliders.rz.value + '\u00B0';
-    outs.dz.textContent = (+sliders.dz.value).toFixed(2).replace(/\.?0+$/, '') || '0';
   }
   function updateTools() {
     if (!modelTools) return;
@@ -652,7 +655,6 @@
     sliders.rx.value = Math.round(d.rx / DEG);
     sliders.ry.value = Math.round(d.ry / DEG);
     sliders.rz.value = Math.round(d.rz / DEG);
-    sliders.dz.value = d.dz;
     updateOut();
   }
   function bindSlider(el, key) {
@@ -661,22 +663,44 @@
       var d = currentAdj();
       updateOut();
       if (!d) return;
-      if (key === 'dz') d.dz = parseFloat(el.value) || 0;
-      else d[key] = (parseFloat(el.value) || 0) * DEG;
+      d[key] = (parseFloat(el.value) || 0) * DEG;
     });
   }
   bindSlider(sliders.rx, 'rx');
   bindSlider(sliders.ry, 'ry');
   bindSlider(sliders.rz, 'rz');
-  bindSlider(sliders.dz, 'dz');
 
   var modelReset = document.getElementById('model-reset');
   if (modelReset) modelReset.addEventListener('click', function () {
     var d = currentAdj();
     if (!d) return;
-    d.rx = d.ry = d.rz = d.dz = 0;
+    d.rx = d.ry = d.rz = 0;
     updateTools();
   });
+
+  /* --------------------------------------------- zoom de cámara (FOV) */
+  var camBaseFov = camera.fov;
+  var camGoalFov = camera.fov;
+  function fovFromZoom(v) { return Math.max(10, Math.min(64, camBaseFov - v * 0.22)); }
+  var camZoom = document.getElementById('cam-zoom');
+  var camZoomOut = document.getElementById('cam-zoom-v');
+  function updateCamOut() {
+    if (!camZoomOut) return;
+    var v = parseInt(camZoom.value, 10) || 0;
+    camZoomOut.textContent = (v > 0 ? '+' : '') + v;
+  }
+  if (camZoom) camZoom.addEventListener('input', function () {
+    camGoalFov = fovFromZoom(parseFloat(camZoom.value) || 0);
+    updateCamOut();
+  });
+  var camReset = document.getElementById('cam-reset');
+  if (camReset) camReset.addEventListener('click', function () {
+    if (!camZoom) return;
+    camZoom.value = 0;
+    camGoalFov = camBaseFov;
+    updateCamOut();
+  });
+  updateCamOut();
 
   updateTools();
 
