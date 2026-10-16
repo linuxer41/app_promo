@@ -11,7 +11,6 @@
   var canvas   = document.getElementById('scene');
   var loading  = document.getElementById('loading');
   var errBox   = document.getElementById('err');
-  var MAX_4K   = 3840;   // lado mayor de la exportación (4K)
 
   function fail(msg) {
     errBox.style.display = 'block';
@@ -82,36 +81,27 @@
   // p = posición, ry = giro, scale = tamaño del lado mayor del equipo
   var LAYOUT = {
     feed: {
-      stage: { scale: 0.90, y: 0.10 },
-      hero:   { p: [ 0.90, 0.00,  0.90], ry: -0.05, scale: 3.65 },
+      stage: { scale: 0.90, y: 0.02 },
+      hero:   { p: [ 1.15, -0.05, 0.95], ry: -0.05, scale: 3.70 },
       behind: [
-        { p: [ 0.10, 0.90, -0.60], ry:  0.34, scale: 1.70 },
-        { p: [ 2.25, 0.35, -0.60], ry: -0.36, scale: 1.60 },
-        { p: [ 0.05, -0.80, -0.62], ry: -0.28, scale: 1.55 },
-        { p: [ 2.40, 1.50, -0.62], ry:  0.30, scale: 1.45 },
-        { p: [ 1.15, -1.30, -0.62], ry:  0.00, scale: 1.40 }
+        { p: [ 0.80, 1.25, -0.55], ry:  0.34, scale: 1.55 },
+        { p: [ 1.28, -1.02, -0.55], ry: -0.24, scale: 1.55 }
       ]
     },
     portrait: {
       stage: { scale: 0.86, y: 0.20 },
-      hero:   { p: [ 1.00, 0.10,  0.90], ry: -0.05, scale: 4.05 },
+      hero:   { p: [ 1.12, 0.00, 0.95], ry: -0.05, scale: 3.92 },
       behind: [
-        { p: [ 0.10, 1.10, -0.60], ry:  0.34, scale: 1.75 },
-        { p: [ 2.45, 0.50, -0.60], ry: -0.36, scale: 1.65 },
-        { p: [ 0.05, -0.85, -0.62], ry: -0.28, scale: 1.60 },
-        { p: [ 2.55, 1.65, -0.62], ry:  0.30, scale: 1.50 },
-        { p: [ 1.20, -1.45, -0.62], ry:  0.00, scale: 1.45 }
+        { p: [ 0.78, 1.32, -0.55], ry:  0.34, scale: 1.62 },
+        { p: [ 1.26, -1.04, -0.55], ry: -0.24, scale: 1.60 }
       ]
     },
     reel: {
-      stage: { scale: 0.72, y: -0.42 },
-      hero:   { p: [ 0.45, 0.10,  0.90], ry: -0.03, scale: 3.70 },
+      stage: { scale: 0.60, y: -0.30 },
+      hero:   { p: [ 0.30, 0.02, 0.95], ry: -0.04, scale: 2.75 },
       behind: [
-        { p: [-1.05, 0.80, -0.60], ry:  0.32, scale: 1.85 },
-        { p: [-0.80, -1.00, -0.50], ry: -0.22, scale: 1.75 },
-        { p: [ 1.55,  1.60, -0.62], ry: -0.30, scale: 1.60 },
-        { p: [ 1.50, -1.10, -0.62], ry:  0.20, scale: 1.55 },
-        { p: [ 0.30,  0.85, -0.62], ry:  0.00, scale: 1.50 }
+        { p: [-0.82, 0.62, -0.55], ry:  0.30, scale: 1.38 },
+        { p: [ 0.82, -0.58, -0.55], ry: -0.22, scale: 1.38 }
       ]
     }
   };
@@ -128,6 +118,7 @@
 
   var fmt = 'feed';
   var view = 'all';
+  var sel = null;      // equipo objetivo de las herramientas (clic), no cambia el layout
   var selftest = false;
   var texFlipY = false;
   try {
@@ -151,6 +142,15 @@
     tablet: 'models/galaxy_tab_s8_ultra.glb',
     laptop: 'models/huawei_matebook_x_screen.glb'
   };
+  // Composiciones de escena (el primero es el protagonista). Todo con los
+  // mismos modelos de v3; solo cambia cuántos y cuáles se muestran.
+  var SCENES = {
+    trio:   ['phone', 'tablet', 'laptop'],
+    phones: ['phone', 'phone', 'phone'],
+    duo:    ['phone', 'tablet'],
+    solo:   ['phone']
+  };
+  var compo = 'trio';
 
   function loadGLB(url) {
     return new Promise(function (res, rej) {
@@ -236,14 +236,19 @@
         pivot: pivot, root: root, screen: screen,
         half: { x: sz.x / 2, y: sz.y / 2 },
         offset: { x: 0, y: 0 },
-        adj: { rx: 0, ry: 0, rz: 0 },
+        adj: { rx: 0, ry: 0, rz: 0, dz: 0 },
         slotP: { x: 0, y: 0, z: 0 }, slotS: 1
       };
       deviceOrder.push(id);
       applyLayout(false);
       buildScreenRows();
       updateTools();
-      return tryAuto(id, AUTO[type]).then(function () { return id; });
+      var autos = AUTO[type];
+      if (type === 'phone' && autos.length > 1) {   // variar captura entre móviles
+        var off = (typeCount[type] - 1) % autos.length;
+        autos = autos.slice(off).concat(autos.slice(0, off));
+      }
+      return tryAuto(id, autos).then(function () { return id; });
     });
   }
 
@@ -252,12 +257,49 @@
   // con una malla/material propios para el LCD ("Screen"), de modo que el
   // screenshot se pinta a resolución completa y sin iluminación.
 
-  Promise.all([
-    addDevice('phone'),
-    addDevice('tablet'),
-    addDevice('laptop')
-  ]).then(function () {
-    applyLayout(true);
+  var loadingScene = false;
+
+  function clearDevices() {
+    deviceOrder.forEach(function (id) {
+      var d = devices[id];
+      if (d && d.pivot) stage.remove(d.pivot);
+    });
+    devices = {};
+    deviceOrder = [];
+    typeCount = {};
+    sel = null;
+    view = 'all';
+  }
+
+  function setScene(id) {
+    if (loadingScene) return;
+    if (!SCENES[id]) id = 'trio';
+    compo = id;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-scene]'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-scene') === id);
+      b.disabled = true;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === 'all');
+    });
+    loadingScene = true;
+    clearDevices();
+    applyLayout(false);
+    updateTools();
+    return Promise.all(SCENES[id].map(function (t) { return addDevice(t); })).then(function () {
+      applyLayout(true);
+      loadingScene = false;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-scene]'), function (b) { b.disabled = false; });
+    });
+  }
+
+  var qsScene = null, qsSel = null;
+  try {
+    qsScene = new URLSearchParams(location.search).get('scene');
+    qsSel = new URLSearchParams(location.search).get('sel');
+  } catch (e) {}
+  setScene(qsScene || compo).then(function () {
+    if (qsSel && devices[qsSel]) { sel = qsSel; updateTools(); }
     loading.style.display = 'none';
     if (selftest) runSelfTest();
   }).catch(function (e) {
@@ -303,9 +345,9 @@
   }
 
   var AUTO = {
-    phone:  ['screns/mobile_1.png', 'screns/mobile_2.png', 'mobile_1.png', 'mobile_2.png', 'app-screenshot.png'],
-    tablet: ['screns/tablet.jpeg', 'tablet.jpeg', 'app-screenshot.png'],
-    laptop: ['screns/pc_screen.png', 'pc_screen.png', 'app-screenshot.png']
+    phone:  ['screns/mobile_1.png', 'screns/mobile_2.png'],
+    tablet: ['screns/tablet.jpeg'],
+    laptop: ['screns/pc_screen.png']
   };
   function tryAuto(id, list) {
     return new Promise(function (resolve) {
@@ -437,8 +479,8 @@
       var d = devices[key];
       var g = d.pivot.userData.goal;
       if (!g) return;
-      var a = d.adj || { rx: 0, ry: 0, rz: 0 };
-      d.pivot.position.lerp(new THREE.Vector3(g.p[0], g.p[1], g.p[2]), 0.12);
+      var a = d.adj || { rx: 0, ry: 0, rz: 0, dz: 0 };
+      d.pivot.position.lerp(new THREE.Vector3(g.p[0], g.p[1], g.p[2] + (a.dz || 0)), 0.12);
       d.pivot.rotation.x += (a.rx - d.pivot.rotation.x) * 0.12;
       d.pivot.rotation.y += ((g.ry + a.ry) - d.pivot.rotation.y) * 0.12;
       d.pivot.rotation.z += (a.rz - d.pivot.rotation.z) * 0.12;
@@ -514,6 +556,7 @@
   }
   function setView(v) {
     view = (v === 'all' || devices[v]) ? v : 'all';
+    if (v !== 'all') sel = v;
     Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
       b.classList.toggle('active', b.getAttribute('data-view') === view);
     });
@@ -564,8 +607,8 @@
     var mode = drag.mode, id = drag.id, moved = drag.moved;
     drag.mode = null; drag.id = null;
     if (moved) return;
-    if (mode === 'move' && id) setView(view === id ? 'all' : id);
-    else if (mode === 'rotate' && view !== 'all') setView('all');
+    if (mode === 'move' && id) { sel = (sel === id) ? null : id; updateTools(); }
+    else if (mode === 'rotate' && sel) { sel = null; updateTools(); }
   });
 
   window.addEventListener('pointermove', function (e) {
@@ -591,7 +634,7 @@
   });
 
   window.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && view !== 'all') setView('all');
+    if (e.key === 'Escape' && sel) { sel = null; updateTools(); }
   });
 
   /* -------------------------------------------------------- botones UI */
@@ -605,10 +648,14 @@
       card.className = 'card fmt-' + fmt + (card.classList.contains('show-safe') ? ' show-safe' : '');
       setActive('[data-fmt]', b);
       applyLayout(false);
+      updateSnapLabel();
     });
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
     b.addEventListener('click', function () { setView(b.getAttribute('data-view')); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-scene]'), function (b) {
+    b.addEventListener('click', function () { setScene(b.getAttribute('data-scene')); });
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-add]'), function (b) {
     b.addEventListener('click', function () {
@@ -623,49 +670,58 @@
 
   /* ------------------------------------- tools del modelo seleccionado */
   var DEG = Math.PI / 180;
+  var DZ_UNIT = 0.08;   // unidades de mundo por paso del slider de zoom del objeto
   var modelTools = document.getElementById('model-tools');
   var toolsTitle = document.getElementById('model-tools-title');
   var sliders = {
+    dz: document.getElementById('zoom'),
     rx: document.getElementById('rot-x'),
     ry: document.getElementById('rot-y'),
     rz: document.getElementById('rot-z')
   };
   var outs = {
+    dz: document.getElementById('zoom-v'),
     rx: document.getElementById('rot-x-v'),
     ry: document.getElementById('rot-y-v'),
     rz: document.getElementById('rot-z-v')
   };
 
   function currentAdj() {
-    var d = devices[view];
-    return (view !== 'all' && d) ? d.adj : null;
+    var d = devices[sel];
+    return d ? d.adj : null;
   }
   function updateOut() {
     if (!outs.rx) return;
     outs.rx.textContent = sliders.rx.value + '\u00B0';
     outs.ry.textContent = sliders.ry.value + '\u00B0';
     outs.rz.textContent = sliders.rz.value + '\u00B0';
+    if (outs.dz) {
+      var zv = parseFloat(sliders.dz.value) || 0;
+      outs.dz.textContent = (zv > 0 ? '+' : '') + zv;
+    }
   }
   function updateTools() {
     if (!modelTools) return;
     var d = currentAdj();
     if (!d) { modelTools.hidden = true; return; }
     modelTools.hidden = false;
-    if (toolsTitle) toolsTitle.textContent = 'Ajustar: ' + devices[view].label;
+    if (toolsTitle) toolsTitle.textContent = 'Ajustar: ' + devices[sel].label;
+    sliders.dz.value = Math.round(d.dz / DZ_UNIT);
     sliders.rx.value = Math.round(d.rx / DEG);
     sliders.ry.value = Math.round(d.ry / DEG);
     sliders.rz.value = Math.round(d.rz / DEG);
     updateOut();
   }
-  function bindSlider(el, key) {
+  function bindSlider(el, key, factor) {
     if (!el) return;
     el.addEventListener('input', function () {
       var d = currentAdj();
       updateOut();
       if (!d) return;
-      d[key] = (parseFloat(el.value) || 0) * DEG;
+      d[key] = (parseFloat(el.value) || 0) * (factor || DEG);
     });
   }
+  bindSlider(sliders.dz, 'dz', DZ_UNIT);
   bindSlider(sliders.rx, 'rx');
   bindSlider(sliders.ry, 'ry');
   bindSlider(sliders.rz, 'rz');
@@ -674,7 +730,7 @@
   if (modelReset) modelReset.addEventListener('click', function () {
     var d = currentAdj();
     if (!d) return;
-    d.rx = d.ry = d.rz = 0;
+    d.rx = d.ry = d.rz = d.dz = 0;
     updateTools();
   });
 
@@ -711,71 +767,155 @@
   Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) { b.classList.toggle('active', b.getAttribute('data-view') === view); });
 
   /* ------------------------------------------------------------- export */
-  function exportPNG() {
-    if (typeof htmlToImage === 'undefined') { fail('Falta libs/html-to-image.js (recarga con Ctrl+F5).'); return; }
-    var w = card.clientWidth, h = card.clientHeight;
-    var ratio = MAX_4K / Math.max(w, h);
-    sizeRenderer(MAX_4K);
+  // Tamaño nativo por plataforma (Instagram / Facebook / TikTok / Reels)
+  var EXPORT = {
+    feed:     { w: 1080, h: 1080 },
+    portrait: { w: 1080, h: 1350 },
+    reel:     { w: 1080, h: 1920 }
+  };
+  var EXPORT_SS = 2;       // supersampling del 3D al exportar (más nítido)
+  var ext = 'png';         // png | jpg
+  var exporting = false;
+
+  function updateSnapLabel() {
+    var b = document.getElementById('snap');
+    var s = EXPORT[fmt];
+    if (b) b.innerHTML = '<i class="fa fa-camera"></i> Descargar ' + s.w + '\u00D7' + s.h;
+  }
+
+  // Renderiza la card en `targetFmt`, la convierte a imagen y llama cb(err, url, name).
+  function renderAd(targetFmt, cb) {
+    if (typeof htmlToImage === 'undefined') { cb(new Error('Falta libs/html-to-image.js (recarga con Ctrl+F5).')); return; }
+    var prevFmt = fmt, prevClass = card.className;
+    fmt = targetFmt;
+    card.className = 'card fmt-' + fmt;
+    var size = EXPORT[fmt];
+    var w = card.clientWidth || 600, h = card.clientHeight || 600;
+    var ratio = size.w / w;
+
+    // 3D supersampleado para que la pantalla del modelo salga nítida a 1080
+    sizeRenderer(Math.max(size.w, size.h) * EXPORT_SS);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    applyLayout(true);
     renderer.render(scene, camera);
     var data = renderer.domElement.toDataURL('image/png');
     sizeRenderer(RENDER_LONG);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
     renderer.render(scene, camera);
 
     var img = new Image();
     img.style.cssText = 'position:absolute;inset:0;z-index:1;width:100%;height:100%;';
+    function finish() {
+      card.removeChild(img);
+      canvas.style.visibility = '';
+      sizeRenderer(RENDER_LONG);
+      fmt = prevFmt;
+      card.className = prevClass;
+      resize();
+      applyLayout(true);
+      renderer.render(scene, camera);
+    }
     img.onload = function () {
       canvas.style.visibility = 'hidden';
       card.appendChild(img);
-      htmlToImage.toPng(card, { pixelRatio: ratio, cacheBust: true })
-        .then(function (url) {
-          var a = document.createElement('a');
-          a.download = 'resto-v3-' + fmt + '.png';
-          a.href = url;
-          a.click();
-        })
-        .catch(function (e) { fail('No se pudo exportar: ' + (e && e.message ? e.message : e)); })
-        .then(function () {
-          card.removeChild(img);
-          canvas.style.visibility = '';
-          sizeRenderer(RENDER_LONG);
-          renderer.render(scene, camera);
-        });
+      var job = ext === 'jpg'
+        ? htmlToImage.toJpeg(card, { pixelRatio: ratio, quality: 0.95, cacheBust: true })
+        : htmlToImage.toPng(card, { pixelRatio: ratio, cacheBust: true });
+      job.then(function (url) {
+        finish();
+        cb(null, url, 'resto-' + targetFmt + '-' + size.w + 'x' + size.h + '.' + ext);
+      }).catch(function (e) {
+        finish();
+        cb(e);
+      });
+    };
+    img.onerror = function () {
+      fmt = prevFmt; card.className = prevClass; resize(); applyLayout(true);
+      cb(new Error('No se pudo leer el render 3D.'));
     };
     img.src = data;
   }
-  document.getElementById('snap').addEventListener('click', exportPNG);
 
-  // autotest headless: exporta 4K y publica las dimensiones resultantes
-  function runSelfTest() {
-    var w = card.clientWidth, h = card.clientHeight;
-    var ratio = MAX_4K / Math.max(w, h);
-    sizeRenderer(MAX_4K);
-    renderer.render(scene, camera);
-    var data = renderer.domElement.toDataURL('image/png');
-    var img = new Image();
-    img.style.cssText = 'position:absolute;inset:0;z-index:1;width:100%;height:100%;';
-    img.onload = function () {
-      canvas.style.visibility = 'hidden';
-      card.appendChild(img);
-      htmlToImage.toPng(card, { pixelRatio: ratio, cacheBust: true }).then(function (url) {
-        var probe = new Image();
-        probe.onload = function () {
-          var out = 'SELFTEST ok ' + probe.naturalWidth + 'x' + probe.naturalHeight + ' card=' + w + 'x' + h + ' fmt=' + fmt;
-          var el = document.createElement('div');
-          el.id = 'selftest';
-          el.textContent = out;
-          el.style.cssText = 'position:fixed;left:0;top:0;z-index:9999;background:#0f0;color:#000;font:12px monospace;padding:2px 4px;';
-          document.body.appendChild(el);
-          document.title = out;
-        };
-        probe.onerror = function () { document.title = 'SELFTEST img error'; };
-        probe.src = url;
-      }).catch(function (e) {
-        document.title = 'SELFTEST export error ' + (e && e.message ? e.message : e);
+  function saveUrl(url, name) {
+    var a = document.createElement('a');
+    a.download = name;
+    a.href = url;
+    a.click();
+  }
+
+  function exportOne(targetFmt, done) {
+    renderAd(targetFmt, function (err, url, name) {
+      if (err) {
+        fail('No se pudo exportar: ' + (err && err.message ? err.message : err));
+        if (done) done(err);
+        return;
+      }
+      saveUrl(url, name);
+      if (done) done();
+    });
+  }
+
+  function exportAll() {
+    if (exporting) return;
+    exporting = true;
+    var list = ['feed', 'portrait', 'reel'];
+    var snap = document.getElementById('snap');
+    var btn = document.getElementById('snap-all');
+    if (snap) snap.disabled = true;
+    if (btn) btn.disabled = true;
+    var i = 0;
+    function step() {
+      if (i >= list.length) {
+        exporting = false;
+        if (snap) snap.disabled = false;
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-camera"></i> Exportar todo (3)'; }
+        return;
+      }
+      if (btn) btn.innerHTML = '<i class="fa fa-camera"></i> Exportando ' + (i + 1) + '/' + list.length + '\u2026';
+      exportOne(list[i], function () {
+        i++;
+        setTimeout(step, 900);   // pausa para que el navegador permita varias descargas
       });
-    };
-    img.onerror = function () { document.title = 'SELFTEST canvas error'; };
-    img.src = data;
+    }
+    step();
+  }
+
+  var snapBtn = document.getElementById('snap');
+  if (snapBtn) snapBtn.addEventListener('click', function () { if (!exporting) exportOne(fmt); });
+  var snapAll = document.getElementById('snap-all');
+  if (snapAll) snapAll.addEventListener('click', exportAll);
+
+  // selector de formato de archivo PNG / JPG
+  var extPng = document.getElementById('ext-png');
+  var extJpg = document.getElementById('ext-jpg');
+  function setExt(v) {
+    ext = v;
+    if (extPng) extPng.classList.toggle('active', v === 'png');
+    if (extJpg) extJpg.classList.toggle('active', v === 'jpg');
+  }
+  if (extPng) extPng.addEventListener('click', function () { setExt('png'); });
+  if (extJpg) extJpg.addEventListener('click', function () { setExt('jpg'); });
+  updateSnapLabel();
+
+  // autorprueba headless: exporta el formato actual y publica las dimensiones
+  function runSelfTest() {
+    renderAd(fmt, function (err, url) {
+      if (err) { document.title = 'SELFTEST export error ' + (err && err.message ? err.message : err); return; }
+      var probe = new Image();
+      probe.onload = function () {
+        var out = 'SELFTEST ok ' + probe.naturalWidth + 'x' + probe.naturalHeight + ' fmt=' + fmt;
+        var el = document.createElement('div');
+        el.id = 'selftest';
+        el.textContent = out;
+        el.style.cssText = 'position:fixed;left:0;top:0;z-index:9999;background:#0f0;color:#000;font:12px monospace;padding:2px 4px;';
+        document.body.appendChild(el);
+        document.title = out;
+      };
+      probe.onerror = function () { document.title = 'SELFTEST img error'; };
+      probe.src = url;
+    });
   }
 
   /* ---------------------------------------------------------------- go */

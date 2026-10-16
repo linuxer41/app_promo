@@ -1,9 +1,7 @@
 ﻿/* Modelos procedurales (hechos con código, sin descargas) + Three.js LOCAL.
-   Funciona con doble clic al HTML, sin internet y sin servidor.
-   Para modo v2 (modelos GLB reales) usa window.V2_MODE = true y los archivos models/. */
+   Funciona con doble clic al HTML, sin internet y sin servidor. */
 (function () {
   'use strict';
-  window.V2_MODE = window.V2_MODE === true;
 
   var loading = document.getElementById('loading');
   var errBox = document.getElementById('err');
@@ -49,6 +47,11 @@
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     var maxAniso = renderer.capabilities.getMaxAnisotropy();
+    // Igual que en v3: el canvas se renderiza SIEMPRE a resolución fija alta
+    // (lado mayor) y el navegador lo escala por CSS. Así el screenshot de la
+    // pantalla del modelo se ve nítido, sin depender del tamaño de la card.
+    var RENDER_LONG = 1920;
+    var exportLock = false;   // true mientras se exporta (fija el pixel ratio a mano)
     if (THREE.SRGBColorSpace && 'outputColorSpace' in renderer) {
       renderer.outputColorSpace = THREE.SRGBColorSpace;
     } else if ('outputEncoding' in renderer && THREE.sRGBEncoding !== undefined) {
@@ -72,7 +75,7 @@
 
     /* ---------- pantallas ---------- */
     var screenMats = [];   // materiales de las 3 pantallas para cambiarles la textura
-    var lastShot = null;   // screenshot global (app-screenshot.png): vale para los 3
+    var lastShot = null;   // screenshot global: vale para los 3
     var kindShots = {};    // screenshot por aparato: { phone, tablet, laptop }
     // Icono real de la app para la maqueta de las pantallas (logo-app.png junto al HTML)
     var appLogo = new Image();
@@ -208,12 +211,11 @@
       if (loading) loading.style.display = 'none';
     }
 
-    // Auto-carga por aparato: usa los archivos de la carpeta "screns" si existen,
-    // con fallback a nombres genéricos.
+    // Auto-carga por aparato: usa los archivos de la carpeta "screns".
     var AUTO = {
-      phone: ['screns/mobile_1.png', 'screns/mobile_2.png', 'movil.png', 'movil.jpg', 'phone.png', 'phone.jpg', 'app-screenshot.png', 'screenshot.png'],
-      tablet: ['screns/tablet.jpeg', 'tablet.png', 'tablet.jpg', 'app-screenshot.png', 'screenshot.png'],
-      laptop: ['screns/pc_screen.png', 'pc.png', 'pc.jpg', 'pc_screen.png', 'pc-screen.png', 'app-screenshot.png', 'screenshot.png', 'app.png']
+      phone: ['screns/mobile_1.png', 'screns/mobile_2.png'],
+      tablet: ['screns/tablet.jpeg'],
+      laptop: ['screns/pc_screen.png']
     };
     function tryAutoFor(kind, list) {
       if (!list.length || kindShots[kind]) return;
@@ -333,10 +335,12 @@
       // 4. escena 3D renderizada a 1080 (fondo transparente, se fusiona con la foto)
       var w = card.clientWidth || 600;
       var oldPR = renderer.getPixelRatio();
+      exportLock = true;
       renderer.setPixelRatio(S / w);
       resize();
       renderer.render(scene, camera);
       g.drawImage(canvas, 0, 0, S, S);
+      exportLock = false;
       renderer.setPixelRatio(oldPR);
       resize();
 
@@ -629,10 +633,12 @@
       var sceneSize = Math.min(W, H - hy - H * 0.02 - storeBlock - featBlock - H * 0.03);
       var yScene = hy + H * 0.02;
       var oldPR = renderer.getPixelRatio();
+      exportLock = true;
       renderer.setPixelRatio(sceneSize / w);
       resize();
       renderer.render(scene, camera);
       g.drawImage(canvas, (W - sceneSize) / 2, yScene, sceneSize, sceneSize);
+      exportLock = false;
       renderer.setPixelRatio(oldPR);
       resize();
 
@@ -803,14 +809,8 @@
     var devices;
     var root = new THREE.Group();
     scene.add(root);
-    if (!window.V2_MODE) {
-      devices = { laptop: createLaptop(), tablet: createTablet(), phone: createPhone() };
-      Object.keys(devices).forEach(function (k) { root.add(devices[k]); });
-    } else {
-      // Modo v2: también cargamos los modelos procedurales para que se vean
-      devices = { laptop: createLaptop(), tablet: createTablet(), phone: createPhone() };
-      Object.keys(devices).forEach(function (k) { root.add(devices[k]); });
-    }
+    devices = { laptop: createLaptop(), tablet: createTablet(), phone: createPhone() };
+    Object.keys(devices).forEach(function (k) { root.add(devices[k]); });
 
     /* ---------- adornos ---------- */
     var neonMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 });
@@ -947,6 +947,7 @@
 
     function resize() {
       var w = card.clientWidth || 600, h = card.clientHeight || 600;
+      if (!exportLock) renderer.setPixelRatio(Math.max(1, RENDER_LONG / Math.max(w, h)));
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();

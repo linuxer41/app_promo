@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Resto — Anuncio v3</title>
-<link rel="stylesheet" href="css/v3.css?v=4" />
+<link rel="stylesheet" href="css/v3.css?v=18" />
 </head>
 <body>
   <aside class="tools">
@@ -29,17 +29,21 @@
     </div>
     <hr />
     <div class="tool-group">
+      <span>Composición</span>
+      <div class="row">
+        <button data-scene="trio" class="active">Trío</button>
+        <button data-scene="phones">3 móviles</button>
+      </div>
+      <div class="row">
+        <button data-scene="duo">Móvil + Tablet</button>
+        <button data-scene="solo">Solo móvil</button>
+      </div>
+    </div>
+    <hr />
+    <div class="tool-group">
       <span>Cámara</span>
       <label class="slider"><span>Acercar / alejar</span><b id="cam-zoom-v">0</b><input type="range" id="cam-zoom" min="-100" max="100" step="1" value="0" /></label>
       <button id="cam-reset">Restablecer</button>
-    </div>
-    <hr />
-    <div class="tool-group" id="model-tools" hidden>
-      <span id="model-tools-title">Ajustar modelo</span>
-      <label class="slider"><span>Rotar X</span><b id="rot-x-v">0&deg;</b><input type="range" id="rot-x" min="-180" max="180" step="1" value="0" /></label>
-      <label class="slider"><span>Rotar Y</span><b id="rot-y-v">0&deg;</b><input type="range" id="rot-y" min="-180" max="180" step="1" value="0" /></label>
-      <label class="slider"><span>Rotar Z</span><b id="rot-z-v">0&deg;</b><input type="range" id="rot-z" min="-180" max="180" step="1" value="0" /></label>
-      <button id="model-reset">Restablecer</button>
     </div>
     <hr />
     <div class="tool-group">
@@ -62,9 +66,26 @@
       <label class="upload" style="border-style:solid"><input type="checkbox" id="safe" style="width:15px;height:15px;accent-color:#DC2626" /> Margen seguro</label>
     </div>
     <div class="tool-group">
-      <button class="snap" id="snap"><i class="fa fa-camera"></i> Descargar PNG 4K</button>
+      <span>Exportar</span>
+      <div class="row">
+        <button id="ext-png" class="active">PNG</button>
+        <button id="ext-jpg">JPG</button>
+      </div>
+      <button class="snap" id="snap"><i class="fa fa-camera"></i> Descargar 1080&times;1080</button>
+      <button id="snap-all"><i class="fa fa-camera"></i> Exportar todo (3)</button>
     </div>
-    <p class="hint">Arrastra un equipo para moverlo. Shift + arrastrar (o botón derecho) gira la escena. Clic en un equipo para traerlo al frente.</p>
+    <p class="hint">Arrastra un equipo para moverlo. Shift + arrastrar (o botón derecho) gira la escena. Clic en un equipo para seleccionarlo y ajustarlo (Escape para quitar).</p>
+  </aside>
+
+  <aside class="tools model-panel" id="model-tools" hidden>
+    <div class="tool-group">
+      <span id="model-tools-title">Ajustar modelo</span>
+      <label class="slider"><span>Acercar / alejar</span><b id="zoom-v">0</b><input type="range" id="zoom" min="-100" max="100" step="1" value="0" /></label>
+      <label class="slider"><span>Rotar X</span><b id="rot-x-v">0&deg;</b><input type="range" id="rot-x" min="-180" max="180" step="1" value="0" /></label>
+      <label class="slider"><span>Rotar Y</span><b id="rot-y-v">0&deg;</b><input type="range" id="rot-y" min="-180" max="180" step="1" value="0" /></label>
+      <label class="slider"><span>Rotar Z</span><b id="rot-z-v">0&deg;</b><input type="range" id="rot-z" min="-180" max="180" step="1" value="0" /></label>
+      <button id="model-reset">Restablecer</button>
+    </div>
   </aside>
 
   <div class="card fmt-feed" id="card">
@@ -93,6 +114,7 @@
     </div>
 
     <div class="cta">
+      <span class="go">Descárgala gratis <i class="fa fa-arrow-right"></i></span>
       <div class="stores">
         <a href="https://www.apple.com/app-store/" target="_blank" rel="noopener" aria-label="App Store" title="App Store"><i class="fab fa-apple"></i></a>
         <a href="https://play.google.com/store" target="_blank" rel="noopener" aria-label="Google Play" title="Google Play"><i class="fab fa-google-play"></i></a>
@@ -109,6 +131,6 @@
   <script src="libs/three.min.js"></script>
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/html-to-image.js"></script>
-  <script src="js/v3.js?v=4"></script>
+  <script src="js/v3.js?v=18"></script>
 </body>
 </html>

@@ -28,6 +28,7 @@
 .fa-camera::before          { content: '\f030'; }
 .fa-image::before           { content: '\f03e'; }
 .fa-circle-check::before    { content: '\f058'; }
+.fa-arrow-right::before     { content: '\f061'; }
 @font-face { font-family: 'FAB'; src: url('../fonts/fa-brands-400.woff2') format('woff2'); font-weight: 400; font-display: block; }
 .fab { font-family: 'FAB'; font-weight: 400; font-style: normal; line-height: 1; }
 .fa-apple::before        { content: '\f179'; }
@@ -107,9 +108,10 @@ body {
 .bg {
   position: absolute; inset: 0; z-index: 0;
   background:
-    radial-gradient(120% 85% at 84% 6%, rgba(220,38,38,.20), transparent 52%),
-    radial-gradient(85% 70% at 6% 100%, rgba(220,38,38,.10), transparent 58%),
-    linear-gradient(165deg, #ffffff 0%, #fff6f6 42%, #eef2f7 100%);
+    radial-gradient(74% 60% at 92% 4%, rgba(220,38,38,.42), transparent 56%),
+    radial-gradient(60% 55% at 2% 100%, rgba(251,146,60,.30), transparent 60%),
+    radial-gradient(90% 70% at 50% 30%, rgba(255,255,255,.55), transparent 62%),
+    linear-gradient(160deg, #ffffff 0%, #fff2f2 42%, #e6ecf5 100%);
 }
 .bg .blob { position: absolute; border-radius: 50%; filter: blur(2.5cqw); opacity: .55; }
 .blob.b1 { width: 26cqw; height: 26cqw; right: -6cqw; top: 8cqw; background: radial-gradient(circle, rgba(252,165,165,.85), rgba(252,165,165,0)); }
@@ -146,12 +148,12 @@ body {
   font-size: 5.9cqw; line-height: 1.04; font-weight: 800; letter-spacing: -.06cqw; color: var(--ink);
 }
 .headline h1 em { color: var(--red); font-style: normal; }
-.headline p { margin-top: 1.6cqw; font-size: 2.2cqw; line-height: 1.4; font-weight: 600; color: var(--muted); max-width: none; }
+.headline p { margin-top: 1.6cqw; font-size: 2.2cqw; line-height: 1.4; font-weight: 600; color: var(--muted); max-width: 40cqw; }
 
 /* funciones (fila inferior izquierda, con separadores verticales) */
 .pills {
   position: absolute; z-index: 3; left: 6cqw; bottom: 6cqw;
-  display: flex; align-items: flex-start; gap: 2.4cqw; max-width: 66cqw;
+  display: flex; align-items: flex-start; gap: 2.4cqw; max-width: 58cqw;
 }
 .pill { display: flex; align-items: flex-start; gap: 1cqw; }
 .pill + .pill { border-left: .22cqw solid rgba(15,23,42,.16); padding-left: 2.4cqw; }
@@ -162,19 +164,20 @@ body {
 /* CTA (tiendas, fila derecha) */
 .cta {
   position: absolute; z-index: 3; right: 6cqw; bottom: 6.5cqw;
-  display: flex; align-items: center; justify-content: flex-end;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 1.5cqw;
 }
 .cta .go {
-  display: inline-flex; align-items: center; gap: 1.4cqw;
-  background: linear-gradient(180deg, #EF4444, var(--red)); color: #fff; text-decoration: none;
-  font-weight: 800; font-size: 3cqw; padding: 2.4cqw 3.4cqw; border-radius: 999px;
-  box-shadow: 0 1.4cqw 3.2cqw rgba(220,38,38,.42); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 1cqw;
+  background: var(--red); color: #fff; text-decoration: none;
+  font-weight: 800; font-size: 2.5cqw; letter-spacing: .01em;
+  padding: 1.9cqw 3.2cqw; border-radius: 0;
+  box-shadow: none; white-space: nowrap;
 }
-.cta .go i { font-size: 2.6cqw; }
+.cta .go i { font-size: 1.9cqw; opacity: .9; }
 .cta .stores { display: flex; gap: 1.2cqw; }
 .cta .stores a {
   pointer-events: auto; display: grid; place-items: center; width: 5.6cqw; height: 5.6cqw;
-  border: 1px solid var(--line); border-radius: 1.6cqw; background: rgba(255,255,255,.8);
+  border: 1px solid var(--line); border-radius: 0; background: rgba(255,255,255,.8);
   color: #334155; text-decoration: none; transition: background .15s, transform .15s;
 }
 .cta .stores a:hover { background: #fff; transform: translateY(-2px); }
@@ -199,17 +202,33 @@ body {
   font-size: 2.2cqw; padding: 2cqw 2.4cqw; line-height: 1.5; }
 
 /* --------------------------------------------------- variantes por formato */
+/* En Reel los equipos llegan abajo: un degradado deja legible el texto */
+.card.fmt-reel::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 62cqw; z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to top,
+    #eef2f7 0%, #eef2f7 20%, rgba(238,242,247,.95) 40%,
+    rgba(238,242,247,.68) 62%, rgba(238,242,247,0) 100%);
+}
 .card.fmt-reel .topbar { top: 4cqw; left: 7cqw; right: 16cqw; }
 .card.fmt-reel .headline { left: 7cqw; top: 15cqw; transform: none; width: 74cqw; }
 .card.fmt-reel .headline h1 { font-size: 8.4cqw; }
 .card.fmt-reel .headline p { font-size: 2.8cqw; max-width: none; }
-.card.fmt-reel .pills { left: 7cqw; right: 16cqw; bottom: 36cqw; display: grid; grid-template-columns: 1fr; gap: 1.4cqw; max-width: none; }
+.card.fmt-reel .pills { left: 7cqw; right: 16cqw; bottom: 38cqw; display: grid; grid-template-columns: 1fr; gap: 1.4cqw; max-width: none; }
 .card.fmt-reel .pill + .pill { border-left: 0; padding-left: 0; border-top: .22cqw solid rgba(15,23,42,.16); padding-top: 1.4cqw; }
-.card.fmt-reel .cta { left: 7cqw; right: 16cqw; bottom: 28cqw; justify-content: center; }
+.card.fmt-reel .cta { left: 7cqw; right: 16cqw; bottom: 28cqw; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; }
 .card.fmt-reel .cta .stores { justify-content: center; }
 
 .card.fmt-portrait .headline { top: 47%; width: 50cqw; }
 .card.fmt-portrait .headline h1 { font-size: 6.7cqw; }
+
+/* panel flotante para editar el modelo seleccionado (siempre visible, a la derecha) */
+.model-panel {
+  position: fixed; right: 18px; top: 50%; transform: translateY(-50%);
+  width: 198px; z-index: 60;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+}
+.model-panel[hidden] { display: none; }
 
 /* ------------------------------------------ sliders de herramientas */
 .tools .slider {
