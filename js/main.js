@@ -47,7 +47,7 @@
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     var maxAniso = renderer.capabilities.getMaxAnisotropy();
-    // Igual que en v3: el canvas se renderiza SIEMPRE a resolución fija alta
+    // Igual que en v2: el canvas se renderiza SIEMPRE a resolución fija alta
     // (lado mayor) y el navegador lo escala por CSS. Así el screenshot de la
     // pantalla del modelo se ve nítido, sin depender del tamaño de la card.
     var RENDER_LONG = 1920;

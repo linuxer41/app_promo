@@ -20,4 +20,5 @@ tmp/
 node_modules/
 
 # Capturas exportadas por la app
-resto-v3-*.png
+resto-*.png
+resto-*.jpg
