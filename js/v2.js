@@ -162,6 +162,33 @@
   // Cada formato tiene su PROPIA memoria: orden de equipos, vista, selección
   // y, por equipo, offset + ajustes. Al cambiar de formato se conserva todo.
   var fmtState = {};      // fmt -> { order: [], view: 'all', sel: null, init: false }
+  var HEADLINES = [
+    { a: 'Tu restaurante merece una forma', em: 'más fácil', c: 'de trabajar.' },
+    { a: 'Todo tu restaurante, en',       em: 'una sola app', c: '.' },
+    { a: 'Gestiona mesas, cocina y caja', em: 'desde una app', c: '.' },
+    { a: 'Menos papel,',                  em: 'más sabor',     c: ' en tu restaurante.' },
+    { a: 'Tu restaurante,',               em: 'conectado en tiempo real', c: '.' },
+    { a: 'Desde el pedido hasta la caja:', em: 'todo en una app', c: '.' },
+    { a: '',                              em: 'Cobra rápido, cuadra el turno', c: ' sin errores.' },
+    { a: 'Meseros, cocina y caja',        em: 'en la misma aplicación', c: '.' }
+  ];
+  var headlineIdx = 0;
+  function setHeadline(i) {
+    if (i < 0 || i >= HEADLINES.length) return;
+    headlineIdx = i;
+    var h = HEADLINES[i];
+    var elA = document.getElementById('h1-a');
+    var elEm = document.getElementById('h1-em');
+    var elC = document.getElementById('h1-c');
+    if (elA) elA.textContent = h.a;
+    if (elEm) elEm.textContent = h.em;
+    if (elC) elC.textContent = h.c;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-headline]'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-headline') == String(i));
+    });
+    saveState();
+  }
+
   function F(f) {
     f = f || fmt;
     if (!fmtState[f]) fmtState[f] = { order: [], view: 'all', sel: null, init: false };
@@ -185,6 +212,31 @@
       if (fmtState[f].order.indexOf(id) >= 0) return true;
     }
     return false;
+  }
+  // Persistencia por formato en localStorage (base de datos del navegador).
+  // Guarda, para CADA formato, qué equipos tiene su escena y su posición/
+  // escala/giro/selección. Al recargar se reconstruyen todos los formatos tal
+  // cual los dejaste. Cada formato es totalmente independiente del resto.
+  var LS_KEY = 'resto_v2_state_v2';
+  var pendingState = null;
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) pendingState = JSON.parse(raw);
+    } catch (e) { pendingState = null; }
+  }
+  function saveState() {
+    try {
+      var types = {}, mems = {};
+      Object.keys(devices).forEach(function (id) {
+        types[id] = devices[id].type;
+        if (devices[id].mem) mems[id] = devices[id].mem;
+      });
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        order: fmtState, types: types, mems: mems,
+        design: design, headlineIdx: headlineIdx
+      }));
+    } catch (e) {}
   }
   var TYPE_LABEL = { phone: 'Móvil', tablet: 'Tablet', laptop: 'PC' };
   var DEVICE_GLB = {
@@ -270,7 +322,8 @@
     });
   }
 
-  function addDevice(type) {
+  // crea la malla 3D de un equipo y la registra en `devices` con un id dado.
+  function createDevice(type, id, label) {
     return loadGLB(DEVICE_GLB[type]).then(function (root) {
       var screen = prep(root, ORIENT[type]);
       tintDevice(root);
@@ -279,23 +332,37 @@
       stage.add(pivot);
       var bb = new THREE.Box3().setFromObject(root);
       var sz = bb.getSize(new THREE.Vector3());
-      typeCount[type] = (typeCount[type] || 0) + 1;
-      var id = typeCount[type] > 1 ? (type + '-' + typeCount[type]) : type;
+      var suf = /-(\d+)$/.exec(id);
       devices[id] = {
         id: id, type: type,
-        label: TYPE_LABEL[type] + (typeCount[type] > 1 ? ' ' + typeCount[type] : ''),
+        label: label || (TYPE_LABEL[type] + (suf ? ' ' + suf[1] : '')),
         pivot: pivot, root: root, screen: screen,
         half: { x: sz.x / 2, y: sz.y / 2 },
         mem: null,   // memorias por formato; las crea M(d) al usarse
         slotP: { x: 0, y: 0, z: 0 }, slotS: 1
       };
+      return id;
+    });
+  }
+
+  function nextId(type) {
+    typeCount[type] = (typeCount[type] || 0) + 1;
+    return typeCount[type] > 1 ? (type + '-' + typeCount[type]) : type;
+  }
+
+  function addDevice(type) {
+    var n = (typeCount[type] || 0) + 1;                 // nº de esta instancia
+    var id = nextId(type);
+    var label = TYPE_LABEL[type] + (n > 1 ? ' ' + n : '');
+    return createDevice(type, id, label).then(function () {
       F().order.push(id);
       applyLayout(false);
       buildScreenRows();
       updateTools();
+      saveState();
       var autos = AUTO[type];
       if (type === 'phone' && autos.length > 1) {   // variar captura entre móviles
-        var off = (typeCount[type] - 1) % autos.length;
+        var off = (n - 1) % autos.length;
         autos = autos.slice(off).concat(autos.slice(0, off));
       }
       return tryAuto(id, autos).then(function () { return id; });
@@ -350,6 +417,7 @@
     applyLayout(false);
     buildScreenRows();
     updateTools();
+    saveState();
   }
 
   // duplica un equipo tal como está: misma posición, giro y escala visibles.
@@ -381,6 +449,7 @@
       sel = newId;
       applyLayout(false);
       updateTools();
+      saveState();
       return newId;
     });
   }
@@ -404,17 +473,63 @@
       applyLayout(true);
       loadingScene = false;
       Array.prototype.forEach.call(document.querySelectorAll('[data-design]'), function (b) { b.disabled = false; });
+      saveState();
     });
   }
 
+  // --- arranque: reconstruye el estado guardado o crea la escena por defecto ---
   var qsDesign = null, qsSel = null;
   try {
     var qsParams = new URLSearchParams(location.search);
     qsDesign = qsParams.get('design') || qsParams.get('scene');
     qsSel = qsParams.get('sel');
+    var qsHeadline = qsParams.get('headline');
+    if (qsHeadline !== null && !isNaN(qsHeadline)) headlineIdx = parseInt(qsHeadline, 10);
   } catch (e) {}
-  setDesign(qsDesign || design).then(function () {
+
+  // ajusta typeCount para que los ids nuevos no choquen con los reconstruidos
+  function ensureTypeCounts() {
+    Object.keys(devices).forEach(function (id) {
+      var d = devices[id];
+      var m = /-(\d+)$/.exec(id);
+      var n = m ? parseInt(m[1], 10) : 1;
+      if (!typeCount[d.type] || typeCount[d.type] < n) typeCount[d.type] = n;
+    });
+  }
+  function markDesign() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-design]'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-design') === design);
+    });
+  }
+
+  function initScene() {
+    loadState();
+    var types = pendingState && pendingState.types;
+    var ids = types ? Object.keys(types) : [];
+    if (qsDesign) design = qsDesign;                          // ?design= fuerza el diseño
+    else if (pendingState && pendingState.design) design = pendingState.design;
+    if (!ids.length) return setDesign(design);                // primera visita: escena por defecto
+    return Promise.all(ids.map(function (id) { return createDevice(types[id], id); })).then(function () {
+      ids.forEach(function (id) {
+        if (pendingState.mems && pendingState.mems[id] && devices[id]) devices[id].mem = pendingState.mems[id];
+      });
+      if (pendingState.order) fmtState = pendingState.order;
+      if (pendingState.headlineIdx !== undefined && !isNaN(pendingState.headlineIdx)) headlineIdx = parseInt(pendingState.headlineIdx, 10);
+      ensureTypeCounts();
+      var st = F();
+      if (!st.order.length) { markDesign(); return setDesign(design); }  // formato actual sin equipos
+      buildScreenRows();
+      applyLayout(true);
+      updateTools();
+      markDesign();
+      saveState();
+      return null;
+    });
+  }
+
+  initScene().then(function () {
     if (qsSel && devices[qsSel]) { sel = qsSel; F().sel = sel; updateTools(); }
+    setHeadline(headlineIdx);
     loading.style.display = 'none';
     if (selftest) runSelfTest();
   }).catch(function (e) {
@@ -695,6 +810,7 @@
     });
     applyLayout(false);
     updateTools();
+    saveState();
   }
 
   // punto de la escena (coordenadas locales del stage) bajo el cursor,
@@ -741,10 +857,11 @@
     var mode = drag.mode, id = drag.id, moved = drag.moved;
     drag.mode = null; drag.id = null;
     var st = F();
-    if (moved) return;
+    if (moved) { if (mode === 'move') saveState(); return; }
     if (mode === 'move' && id) { sel = (sel === id) ? null : id; st.sel = sel; } 
     else if (mode === 'rotate' && sel) { sel = null; st.sel = null; }
     st.view = view; updateTools();
+    saveState();
   });
 
   window.addEventListener('pointermove', function (e) {
@@ -793,9 +910,17 @@
       card.className = 'card fmt-' + fmt + (card.classList.contains('show-safe') ? ' show-safe' : '');
       setActive('[data-fmt]', b);
       setActive('[data-view]', document.querySelector('[data-view="' + view + '"]'));
-      applyLayout(false);
-      updateTools();
       updateSnapLabel();
+      var live = stN.order.filter(function (id) { return !!devices[id]; });
+      if (!live.length) {
+        // primera visita a este formato: crea su propia escena por defecto
+        // (equipos independientes; no afecta a los demás formatos)
+        setDesign(design);
+      } else {
+        applyLayout(false);
+        updateTools();
+        saveState();
+      }
     });
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
@@ -803,6 +928,9 @@
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-design]'), function (b) {
     b.addEventListener('click', function () { setDesign(b.getAttribute('data-design')); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-headline]'), function (b) {
+    b.addEventListener('click', function () { setHeadline(parseInt(b.getAttribute('data-headline'), 10)); });
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-add]'), function (b) {
     b.addEventListener('click', function () {
@@ -871,6 +999,7 @@
       if (!d) return;
       d[key] = (parseFloat(el.value) || 0) * (factor || DEG);
     });
+    el.addEventListener('change', function () { saveState(); });
   }
   bindSlider(sliders.dz, 'dz', DZ_UNIT);
   bindSlider(sliders.sc, 'sc', 0.01);
@@ -885,19 +1014,12 @@
     d.rx = d.ry = d.rz = d.dz = 0;
     d.sc = 1;
     updateTools();
+    saveState();
   });
 
   var modelDelete = document.getElementById('model-delete');
   if (modelDelete) modelDelete.addEventListener('click', function () {
     if (sel && devices[sel]) removeDevice(sel);
-  });
-
-  var modelDup = document.getElementById('model-duplicate');
-  if (modelDup) modelDup.addEventListener('click', function () {
-    if (!(sel && devices[sel])) return;
-    modelDup.disabled = true;
-    duplicateDevice(sel).then(function () { modelDup.disabled = false; })
-      .catch(function (e) { modelDup.disabled = false; fail('No se pudo duplicar el equipo: ' + (e && e.message ? e.message : e)); });
   });
 
   var modelDup = document.getElementById('model-duplicate');

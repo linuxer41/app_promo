@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Resto — Anuncio v2</title>
-<link rel="stylesheet" href="css/v2.css?v=13" />
+<link rel="stylesheet" href="css/v2.css?v=15" />
 </head>
 <body>
   <aside class="tools">
@@ -14,6 +14,19 @@
       <button data-fmt="feed" class="active">Feed 1:1</button>
       <button data-fmt="portrait">Retrato 4:5</button>
       <button data-fmt="reel">Reel 9:16</button>
+    </div>
+    <hr />
+
+    <div class="tool-group">
+      <span>Texto principal</span>
+      <button data-headline="0" class="active" title="Tu restaurante merece una forma más fácil de trabajar.">Más fácil de trabajar</button>
+      <button data-headline="1" title="Todo tu restaurante, en una sola app.">Todo en una sola app</button>
+      <button data-headline="2" title="Gestiona mesas, cocina y caja desde una app.">Mesas, cocina y caja</button>
+      <button data-headline="3" title="Menos papel, más sabor en tu restaurante.">Menos papel, más sabor</button>
+      <button data-headline="4" title="Tu restaurante, conectado en tiempo real.">Conectado en tiempo real</button>
+      <button data-headline="5" title="Desde el pedido hasta la caja: todo en una app.">Del pedido a la caja</button>
+      <button data-headline="6" title="Cobra rápido, cuadra el turno sin errores.">Cobra rápido, sin errores</button>
+      <button data-headline="7" title="Meseros, cocina y caja en la misma aplicación.">Meseros, cocina y caja</button>
     </div>
     <hr />
 
@@ -84,7 +97,7 @@
     </div>
 
     <div class="headline">
-      <h1>Todo tu restaurante, en <em>una sola app</em>.</h1>
+      <h1><span id="h1-a">Todo tu restaurante, en</span> <em id="h1-em">una sola app</em><span id="h1-c">.</span></h1>
       <p>Meseros, cocina y caja conectados en tiempo real. Sin papel, sin errores.</p>
     </div>
 
@@ -111,6 +124,6 @@
   <script src="libs/three.min.js"></script>
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/html-to-image.js"></script>
-  <script src="js/v2.js?v=13"></script>
+  <script src="js/v2.js?v=15"></script>
 </body>
 </html>
