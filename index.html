@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Resto - Sistema para Restaurantes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Poppins:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <aside class="tools">
+    <div class="tool-group">
+      <span>Vista 3D</span>
+      <div class="tabs" id="tabs">
+        <button data-mode="all" class="active">Todos</button>
+        <button data-mode="phone">Móvil</button>
+        <button data-mode="tablet">Tablet</button>
+        <button data-mode="laptop">PC</button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <span>Pantallas</span>
+      <!-- Un screenshot por aparato (o copia app-screenshot.png junto al HTML para los 3) -->
+      <label class="upload" title="Screenshot del móvil">
+        <i class="fa fa-image"></i> Móvil
+        <input type="file" id="shot-phone" accept="image/*" hidden />
+      </label>
+      <label class="upload" title="Screenshot de la tablet">
+        <i class="fa fa-image"></i> Tablet
+        <input type="file" id="shot-tablet" accept="image/*" hidden />
+      </label>
+      <label class="upload" title="Screenshot del PC">
+        <i class="fa fa-image"></i> PC
+        <input type="file" id="shot-laptop" accept="image/*" hidden />
+      </label>
+    </div>
+    <div class="tool-group">
+      <span>Formato</span>
+      <div class="fmt" id="fmt">
+        <button data-fmt="feed" class="active">Feed 1:1</button>
+        <button data-fmt="portrait">Retrato 4:5</button>
+        <button data-fmt="reel">Reel 9:16</button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <span>Extras</span>
+      <label class="check"><input type="checkbox" id="safeToggle" checked /> Margen seguro (TikTok / Reels)</label>
+    </div>
+    <div class="tool-group">
+      <span>Captura</span>
+      <button class="tool-btn" id="snap" title="Descarga el anuncio en PNG en el formato elegido">
+        <i class="fa fa-camera"></i> Tomar screenshot
+      </button>
+    </div>
+    <p class="tool-hint">Arrastra un modelo para girarlo. Clic en un modelo para enfocarlo.</p>
+  </aside>
+
+  <div class="card fmt-feed" id="card">
+    <div class="photo"></div>
+    <div class="tint"></div>
+    <div class="grid"></div>
+    <div class="bokeh" id="bokeh"></div>
+
+    <canvas id="scene"></canvas>
+    <div class="loading" id="loading">Cargando 3D...</div>
+    <div class="err" id="err" hidden></div>
+
+    <div class="logo">
+      <!-- Si existe logo-app.png (el icono de la app) se usa; si no, queda el emblema SVG -->
+      <img src="logo-app.png" alt="Resto" onload="this.nextElementSibling.remove()" onerror="this.remove()" />
+      <svg viewBox="0 0 48 48" fill="none" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round">
+        <circle cx="24" cy="11" r="2.4" fill="#DC2626" stroke="none" />
+        <path d="M9 30a15 15 0 0 1 30 0" />
+        <line x1="5" y1="30" x2="43" y2="30" />
+        <line x1="9" y1="36" x2="39" y2="36" />
+      </svg>
+      <div><b>Resto</b><small>SISTEMA PARA RESTAURANTES</small></div>
+    </div>
+
+    <div class="content">
+      <h1>Tu restaurante merece una forma <span>más fácil</span> de trabajar.</h1>
+      <div class="stores">
+        <a class="store" href="#"><i class="fab fa-apple"></i><span><small>Descárgala en</small><b>App Store</b></span></a>
+        <a class="store" href="#"><i class="fab fa-google-play"></i><span><small>Disponible en</small><b>Google Play</b></span></a>
+        <a class="store" href="#"><i class="fab fa-microsoft"></i><span><small>Descarga para</small><b>Windows</b></span></a>
+      </div>
+    </div>
+
+    <div class="features">
+      <p class="feat-title">Todo conectado, todo bajo control</p>
+      <div class="feat-grid">
+        <div class="feat"><i class="fa fa-bell-concierge"></i><div><b>App para meseros</b><span>Toman pedidos desde la mesa, sin papel ni errores</span></div></div>
+        <div class="feat"><i class="fa fa-kitchen-set"></i><div><b>App para cocina</b><span>Comandas al instante en pantalla</span></div></div>
+        <div class="feat"><i class="fa fa-cash-register"></i><div><b>App para caja</b><span>Cobra rápido y cierra turno en minutos</span></div></div>
+      </div>
+      <p class="feat-ticks">✓ Sincronizado en línea &nbsp;·&nbsp; ✓ Ventas y reportes &nbsp;·&nbsp; ✓ Soporte móvil</p>
+    </div>
+
+    <div class="safezone" id="safezone">
+      <div class="sz-right"><span>Botones de la app</span></div>
+      <div class="sz-bottom"><span>Descripción y sonido</span></div>
+    </div>
+  </div>
+
+<!-- Todo local y sin internet: funciona con doble clic al HTML, sin servidor -->
+<script src="libs/three.min.js"></script>
+<script src="https://unpkg.com/three@0.147.0/examples/jsm/loaders/GLTFLoader.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

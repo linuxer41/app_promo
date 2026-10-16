@@ -1,0 +1,24 @@
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Logs / temporales
+*.log
+npm-debug.log*
+.tmp/
+tmp/
+*.tmp
+
+# Dependencias (si algún día se usa Node)
+node_modules/
+
+# Capturas exportadas por la app
+resto-v3-*.png
+resto-v4-*.png

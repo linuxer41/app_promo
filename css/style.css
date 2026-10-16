@@ -1,0 +1,271 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+/* Font Awesome Solid local (sin internet): solo los iconos usados */
+@font-face {
+  font-family: 'FA';
+  src: url('../fonts/fa-solid-900.woff2') format('woff2');
+  font-weight: 900; font-style: normal; font-display: block;
+}
+.fa { font-family: 'FA'; font-weight: 900; font-style: normal; line-height: 1; }
+.fa-receipt::before { content: '\f543'; }
+.fa-chart-column::before { content: '\e0e3'; }
+.fa-bell-concierge::before { content: '\f562'; }
+.fa-kitchen-set::before { content: '\e51a'; }
+.fa-cash-register::before { content: '\f788'; }
+.fa-arrows-rotate::before { content: '\f021'; }
+.fa-mobile-screen::before { content: '\f3cf'; }
+.fa-box::before { content: '\f466'; }
+.fa-utensils::before { content: '\f2e7'; }
+.fa-chart-line::before { content: '\f201'; }
+.fa-lightbulb::before { content: '\f0eb'; }
+.fa-image::before { content: '\f03e'; }
+.fa-camera::before { content: '\f030'; }
+/* Font Awesome Brands local (logos App Store / Google Play / Windows) */
+@font-face {
+  font-family: 'FA-Brands';
+  src: url('../fonts/fa-brands-400.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: block;
+}
+.fab { font-family: 'FA-Brands'; font-weight: 400; font-style: normal; line-height: 1; }
+.fa-apple::before { content: '\f179'; }
+.fa-google-play::before { content: '\f3ab'; }
+.fa-microsoft::before { content: '\f3ca'; }
+/* Plus Jakarta Sans local (la fuente de tu app, sin internet) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('../fonts/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('../fonts/plus-jakarta-sans-latin-700-normal.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('../fonts/plus-jakarta-sans-latin-800-normal.woff2') format('woff2');
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+html, body { height: 100%; }
+body {
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  min-height: 100vh; padding: 18px;
+  background: #04141f;
+  font-family: 'Plus Jakarta Sans', 'Poppins', 'Segoe UI', sans-serif;
+  overflow: auto;
+}
+/* Panel lateral de herramientas (fuera de la imagen) */
+.tools {
+  width: 196px; flex-shrink: 0;
+  background: #071627; border: 1px solid rgba(255,255,255,.14);
+  color: #fff; padding: 16px 14px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.tool-group > span {
+  display: block; margin-bottom: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: .18em; opacity: .55;
+}
+.tool-hint { font-size: 11.5px; line-height: 1.55; opacity: .55; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.check input { width: 15px; height: 15px; accent-color: #DC2626; cursor: pointer; }
+/* Guía de margen seguro: zonas que tapan los botones de TikTok / IG / FB.
+   Solo es guía de vista previa, NO sale en la imagen exportada. */
+.safezone { position: absolute; inset: 0; pointer-events: none; }
+.sz-right {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 13%;
+  background: repeating-linear-gradient(45deg, rgba(224,0,92,.20) 0 8px, transparent 8px 16px);
+  border-left: 2px dashed rgba(255,90,130,.85);
+}
+.sz-bottom {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 15%;
+  background: repeating-linear-gradient(45deg, rgba(224,0,92,.16) 0 8px, transparent 8px 16px);
+  border-top: 2px dashed rgba(255,90,130,.85);
+}
+.sz-right span, .sz-bottom span {
+  position: absolute; background: rgba(224,0,92,.9); color: #fff;
+  font-size: 1.35cqw; font-weight: 700; padding: .5cqw 1cqw; white-space: nowrap;
+}
+.sz-right span { top: 2cqw; right: 1cqw; }
+.sz-bottom span { left: 2cqw; bottom: 1cqw; }
+@media (max-width: 900px) {
+  body { flex-direction: column; }
+  .tools { width: min(94vw, 94vh); flex-direction: row; align-items: center; }
+  .tool-group { flex: 1; }
+  .tool-hint { display: none; }
+}
+.card {
+  position: relative;
+  width: min(94vw, 94vh);
+  aspect-ratio: 1 / 1;
+  container-type: inline-size;
+  border-radius: 0;
+  overflow: hidden;
+  color: #fff;
+  background: #051c30;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 3cqw 7cqw rgba(0,0,0,.6), 0 0 0 .3cqw rgba(220,38,38,.12);
+}
+/* Tamaños de tarjeta por formato */
+.card.fmt-feed { width: min(94vw, 94vh); aspect-ratio: 1 / 1; }
+.card.fmt-portrait { width: min(94vw, 75vh); aspect-ratio: 4 / 5; }
+.card.fmt-reel { width: min(94vw, 52.5vh); aspect-ratio: 9 / 16; }
+/* En Reel se apila todo y el texto evita la franja derecha de botones */
+.card.fmt-reel .content { left: 7cqw; right: 16cqw; top: 15cqw; width: auto; }
+.card.fmt-reel h1 { font-size: 8.2cqw; }
+.card.fmt-reel .logo { left: 7cqw; }
+.card.fmt-reel .stores { gap: 1.5cqw; }
+.card.fmt-reel .store { padding: .8cqw 1.2cqw; }
+.card.fmt-reel .store i { font-size: 2.4cqw; }
+.card.fmt-reel .store small { font-size: 1.05cqw; }
+.card.fmt-reel .store b { font-size: 1.7cqw; }
+.card.fmt-reel .features { left: 7cqw; right: 16cqw; bottom: 30cqw; }
+.card.fmt-reel .feat-title { font-size: 2.5cqw; }
+.card.fmt-reel .feat-grid { grid-template-columns: 1fr; gap: 1.4cqw; }
+.card.fmt-reel .feat b { font-size: 2cqw; }
+.card.fmt-reel .feat span { font-size: 1.65cqw; }
+.card.fmt-reel .feat-ticks { font-size: 1.6cqw; }
+.card.fmt-reel .loading { right: 18cqw; }
+/* Foto de restaurante + tintes para acabado premium y legibilidad */
+.photo {
+  position: absolute; inset: 0;
+  background: url('../bg-restaurante.jpg') center 30% / cover no-repeat;
+}
+.tint {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(220,38,38,.20), transparent 42%),
+    linear-gradient(100deg, rgba(3,22,38,.97) 0%, rgba(4,29,50,.94) 32%, rgba(5,35,60,.62) 55%, rgba(5,33,58,.30) 75%, rgba(3,18,32,.50) 100%),
+    linear-gradient(to top, rgba(2,15,28,.98) 0%, rgba(2,15,28,.9) 16%, rgba(2,15,28,0) 34%),
+    radial-gradient(ellipse at center, transparent 52%, rgba(1,10,20,.6) 100%);
+}
+.grid { display: none; }
+.bokeh { position: absolute; top: -3cqw; left: 30%; width: 60%; height: 22cqw; pointer-events: none; opacity: .45; }
+.bokeh span {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,235,200,.9);
+  filter: blur(1.1cqw);
+  animation: twinkle 3s ease-in-out infinite;
+}
+@keyframes twinkle { 50% { opacity: .3; } }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.content {
+  position: absolute; left: 6cqw; top: 14cqw; width: 46cqw;
+  pointer-events: none; text-shadow: 0 .3cqw 1.2cqw rgba(0,0,0,.65);
+}
+.content > * { pointer-events: auto; }
+h1 {
+  font-weight: 800;
+  font-size: 7.2cqw; line-height: 1.04; letter-spacing: -.05cqw;
+}
+h1 span {
+  color: #DC2626;
+  text-shadow: 0 0 1cqw rgba(220,38,38,.45), 0 .3cqw 1.2cqw rgba(0,0,0,.65);
+}
+.lorem { font-size: 2.05cqw; line-height: 1.5; margin-top: 2.2cqw; opacity: .94; max-width: 40cqw; }
+.lorem b { color: #DC2626; }
+.btn {
+  display: inline-block; margin-top: 2.8cqw;
+  padding: 1.3cqw 4cqw; border-radius: 0;
+  background: linear-gradient(180deg, #DC2626, #DC2626);
+  color: #ffffff; font-weight: 800; font-size: 2.2cqw; text-decoration: none;
+  box-shadow: 0 .8cqw 2.4cqw rgba(220,38,38,.45), inset 0 .15cqw 0 rgba(255,255,255,.5);
+  transition: transform .2s, box-shadow .2s;
+}
+.btn:hover { transform: translateY(-.2cqw); box-shadow: 0 1.1cqw 3cqw rgba(220,38,38,.6), inset 0 .15cqw 0 rgba(255,255,255,.5); }
+.tag { margin-top: 1.8cqw; font-size: 2cqw; font-style: italic; font-weight: 600; opacity: .95; }
+.tag em { color: #DC2626; font-style: italic; }
+/* Insignias de tiendas (App Store / Google Play / Windows) */
+.stores { display: flex; gap: 1.2cqw; margin-top: 2.8cqw; }
+.store {
+  display: flex; align-items: center; gap: 1cqw;
+  background: rgba(2,12,22,.72); border: 1px solid rgba(255,255,255,.35);
+  padding: .9cqw 1.5cqw; color: #fff; text-decoration: none;
+  white-space: nowrap; flex-shrink: 0;
+  transition: border-color .2s, transform .2s;
+}
+.store:hover { border-color: #DC2626; transform: translateY(-.2cqw); }
+.store i { font-size: 2.7cqw; }
+.store small { display: block; font-size: 1.1cqw; font-weight: 600; opacity: .7; letter-spacing: .05cqw; }
+.store b { display: block; font-size: 1.9cqw; font-weight: 700; line-height: 1.2; }
+.dots { position: absolute; display: grid; gap: 2.2cqw; pointer-events: none; }
+.dots i { width: .55cqw; height: .55cqw; border-radius: 50%; background: rgba(255,255,255,.85); }
+.dots.left { left: 6cqw; top: 62cqw; grid-template-columns: repeat(8, .55cqw); }
+.dots.right { right: 6cqw; top: 50cqw; grid-template-columns: repeat(3, .55cqw); }
+.logo {
+  position: absolute; top: 4.5cqw; left: 6cqw;
+  display: flex; align-items: center; gap: 1.4cqw;
+}
+.logo svg { width: 5.4cqw; height: 5.4cqw; filter: drop-shadow(0 0 .8cqw rgba(220,38,38,.6)); }
+.logo img { width: 6.4cqw; height: 6.4cqw; object-fit: contain; filter: drop-shadow(0 .4cqw 1cqw rgba(0,0,0,.55)); }
+.logo b { font-size: 4.6cqw; font-weight: 800; letter-spacing: -.05cqw; display: block; line-height: 1; text-shadow: 0 .3cqw 1cqw rgba(0,0,0,.6); }
+.logo small { font-size: 1.45cqw; font-weight: 600; letter-spacing: .42cqw; opacity: .9; display: block; margin-top: .5cqw; }
+.features {
+  position: absolute; left: 5cqw; right: 5cqw; bottom: 4cqw;
+  text-shadow: 0 .2cqw .8cqw rgba(0,0,0,.7);
+}
+.feat-title {
+  text-align: center; font-size: 2.3cqw; font-weight: 800; letter-spacing: .02cqw;
+  margin-bottom: 1.6cqw;
+}
+.feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2cqw; }
+.feat {
+  display: flex; align-items: center; gap: 1.2cqw; text-align: left;
+  background: rgba(2,12,22,.55); border: 1px solid rgba(255,255,255,.22);
+  padding: 1.2cqw 1.4cqw; backdrop-filter: blur(4px);
+}
+.feat i {
+  width: 5.2cqw; height: 5.2cqw; flex-shrink: 0; border-radius: 0;
+  display: grid; place-items: center; font-size: 2.4cqw;
+  color: #FCA5A5;
+  background: rgba(220,38,38,.20); border: 1px solid rgba(220,38,38,.6);
+  box-shadow: 0 0 1.2cqw rgba(220,38,38,.35);
+}
+.feat b { display: block; font-size: 1.9cqw; font-weight: 800; line-height: 1.2; }
+.feat span { display: block; font-size: 1.5cqw; font-weight: 600; line-height: 1.35; opacity: .85; margin-top: .3cqw; }
+.feat-ticks {
+  text-align: center; margin-top: 1.4cqw;
+  font-size: 1.6cqw; font-weight: 700; color: #FCA5A5;
+}
+.tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.tabs button {
+  border: 1px solid rgba(255,255,255,.16); cursor: pointer;
+  background: rgba(255,255,255,.07); color: #fff;
+  font: 600 13px 'Plus Jakarta Sans', sans-serif; padding: 9px 4px; border-radius: 0;
+  transition: background .25s, color .25s, border-color .25s;
+}
+.tabs button:hover { border-color: #DC2626; }
+.tabs button.active { background: #DC2626; border-color: #DC2626; color: #ffffff; }
+.fmt { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.fmt button {
+  border: 1px solid rgba(255,255,255,.16); cursor: pointer;
+  background: rgba(255,255,255,.07); color: #fff;
+  font: 600 13px 'Plus Jakarta Sans', sans-serif; padding: 9px 4px; border-radius: 0;
+  transition: background .25s, color .25s, border-color .25s;
+}
+.fmt button:hover { border-color: #DC2626; }
+.fmt button.active { background: #DC2626; border-color: #DC2626; color: #ffffff; }
+.upload {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 700; color: #fff;
+  background: rgba(255,255,255,.07); border: 1px dashed rgba(255,255,255,.5);
+  padding: 10px 12px; border-radius: 0;
+  transition: background .25s, color .25s, border-color .25s;
+}
+.upload:hover { background: #DC2626; border-color: #DC2626; color: #ffffff; }
+.tool-group .upload + .upload { margin-top: 6px; }
+/* Botón de captura */
+.tool-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%; cursor: pointer;
+  font: 700 13px 'Plus Jakarta Sans', sans-serif; color: #fff;
+  background: #DC2626; border: 1px solid #DC2626;
+  padding: 10px 12px; border-radius: 0;
+  transition: filter .2s;
+}
+.tool-btn:hover { filter: brightness(1.15); }
+.loading { position: absolute; right: 22cqw; top: 45cqw; font-size: 1.8cqw; opacity: .8; }
+.err {
+  position: absolute; left: 6cqw; right: 6cqw; top: 40cqw;
+  background: rgba(0,0,0,.65); border: 1px solid #ff9c9c; color: #ffd7d7;
+  font-size: 1.8cqw; padding: 1.5cqw 2cqw; border-radius: 0; line-height: 1.5;
+}

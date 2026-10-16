@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Resto — Anuncio v3</title>
+<link rel="stylesheet" href="css/v3.css" />
+</head>
+<body>
+  <aside class="tools">
+    <div class="brand">Resto <span>v3</span></div>
+    <div class="tool-group">
+      <span>Formato</span>
+      <button data-fmt="feed" class="active">Feed 1:1</button>
+      <button data-fmt="portrait">Retrato 4:5</button>
+      <button data-fmt="reel">Reel 9:16</button>
+    </div>
+    <hr />
+    <div class="tool-group">
+      <span>Vista 3D</span>
+      <div class="row">
+        <button data-view="all" class="active">Todos</button>
+        <button data-view="phone">Móvil</button>
+      </div>
+      <div class="row">
+        <button data-view="tablet">Tablet</button>
+        <button data-view="laptop">PC</button>
+      </div>
+    </div>
+    <hr />
+    <div class="tool-group">
+      <span>Pantalla (screenshot)</span>
+      <label class="upload"><i class="fa fa-image"></i> Móvil <input type="file" id="up-phone" accept="image/*" hidden /></label>
+      <label class="upload"><i class="fa fa-image"></i> Tablet <input type="file" id="up-tablet" accept="image/*" hidden /></label>
+      <label class="upload"><i class="fa fa-image"></i> PC <input type="file" id="up-laptop" accept="image/*" hidden /></label>
+    </div>
+    <hr />
+    <div class="tool-group">
+      <label class="upload" style="border-style:solid"><input type="checkbox" id="safe" style="width:15px;height:15px;accent-color:#DC2626" /> Margen seguro</label>
+    </div>
+    <div class="tool-group">
+      <button class="snap" id="snap"><i class="fa fa-camera"></i> Descargar PNG 4K</button>
+    </div>
+    <p class="hint">Arrastra para girar los equipos. Clic en un equipo para acercarlo; clic de nuevo (o Esc) para volver.</p>
+  </aside>
+
+  <div class="card fmt-feed" id="card">
+    <div class="bg"><span class="blob b1"></span><span class="blob b2"></span></div>
+
+    <canvas id="scene"></canvas>
+
+    <div class="topbar">
+      <img class="mark" src="logo-app.png" alt="Resto"
+           onerror="this.outerHTML='&lt;div class=&quot;mark fallback&quot;&gt;R&lt;/div&gt;'" />
+      <div class="who">
+        <b>Resto</b>
+        <small><i class="fa fa-circle-check"></i> Sistema para restaurantes · 4.9 ★</small>
+      </div>
+    </div>
+
+    <div class="headline">
+      <h1>Todo tu restaurante, en <em>una sola app</em>.</h1>
+      <p>Meseros, cocina y caja conectados en tiempo real. Sin papel, sin errores.</p>
+    </div>
+
+    <div class="pills">
+      <div class="pill"><i class="fa fa-bell-concierge"></i><div><b>Meseros</b><span>Toma el pedido en la mesa: llega solo a cocina</span></div></div>
+      <div class="pill"><i class="fa fa-kitchen-set"></i><div><b>Cocina</b><span>Las comandas salen en pantalla, sin gritos ni papelitos</span></div></div>
+      <div class="pill"><i class="fa fa-cash-register"></i><div><b>Caja</b><span>Cobra rápido y cuadra el turno al cerrar</span></div></div>
+    </div>
+
+    <div class="cta">
+      <div class="stores">
+        <a href="https://www.apple.com/app-store/" target="_blank" rel="noopener" aria-label="App Store" title="App Store"><i class="fab fa-apple"></i></a>
+        <a href="https://play.google.com/store" target="_blank" rel="noopener" aria-label="Google Play" title="Google Play"><i class="fab fa-google-play"></i></a>
+        <a href="https://apps.microsoft.com/" target="_blank" rel="noopener" aria-label="Microsoft Store" title="Microsoft Store"><i class="fab fa-microsoft"></i></a>
+      </div>
+    </div>
+
+    <div class="safezone"><div class="r"></div><div class="b"></div></div>
+
+    <div class="loading" id="loading">Cargando 3D…</div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <script src="libs/three.min.js"></script>
+  <script src="libs/GLTFLoader.js"></script>
+  <script src="libs/html-to-image.js"></script>
+  <script src="js/v3.js"></script>
+</body>
+</html>
