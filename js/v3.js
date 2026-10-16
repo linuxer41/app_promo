@@ -86,7 +86,10 @@
       hero:   { p: [ 0.90, 0.00,  0.90], ry: -0.05, scale: 3.65 },
       behind: [
         { p: [ 0.10, 0.90, -0.60], ry:  0.34, scale: 1.70 },
-        { p: [ 2.25, 0.35, -0.60], ry: -0.36, scale: 1.60 }
+        { p: [ 2.25, 0.35, -0.60], ry: -0.36, scale: 1.60 },
+        { p: [ 0.05, -0.80, -0.62], ry: -0.28, scale: 1.55 },
+        { p: [ 2.40, 1.50, -0.62], ry:  0.30, scale: 1.45 },
+        { p: [ 1.15, -1.30, -0.62], ry:  0.00, scale: 1.40 }
       ]
     },
     portrait: {
@@ -94,7 +97,10 @@
       hero:   { p: [ 1.00, 0.10,  0.90], ry: -0.05, scale: 4.05 },
       behind: [
         { p: [ 0.10, 1.10, -0.60], ry:  0.34, scale: 1.75 },
-        { p: [ 2.45, 0.50, -0.60], ry: -0.36, scale: 1.65 }
+        { p: [ 2.45, 0.50, -0.60], ry: -0.36, scale: 1.65 },
+        { p: [ 0.05, -0.85, -0.62], ry: -0.28, scale: 1.60 },
+        { p: [ 2.55, 1.65, -0.62], ry:  0.30, scale: 1.50 },
+        { p: [ 1.20, -1.45, -0.62], ry:  0.00, scale: 1.45 }
       ]
     },
     reel: {
@@ -102,7 +108,10 @@
       hero:   { p: [ 0.45, 0.10,  0.90], ry: -0.03, scale: 3.70 },
       behind: [
         { p: [-1.05, 0.80, -0.60], ry:  0.32, scale: 1.85 },
-        { p: [-0.80, -1.00, -0.50], ry: -0.22, scale: 1.75 }
+        { p: [-0.80, -1.00, -0.50], ry: -0.22, scale: 1.75 },
+        { p: [ 1.55,  1.60, -0.62], ry: -0.30, scale: 1.60 },
+        { p: [ 1.50, -1.10, -0.62], ry:  0.20, scale: 1.55 },
+        { p: [ 0.30,  0.85, -0.62], ry:  0.00, scale: 1.50 }
       ]
     }
   };
@@ -117,24 +126,15 @@
     laptop: { screenMat: /screen/i, noFlip: true }   // huawei_*_screen.glb: el LCD es una malla/material propios ("Screen")
   };
 
-  // modo foco: al hacer clic en un equipo se acerca y su pantalla ocupa más
-  // píxeles reales, así el screenshot se ve más nítido que en el layout normal.
-  var FOCUS = {
-    feed:     { p: [0.00, 0.00, 0.50], ry: 0, scale: 5.10 },
-    portrait: { p: [0.00, 0.05, 0.50], ry: 0, scale: 5.60 },
-    reel:     { p: [0.00, 0.00, 0.50], ry: 0, scale: 6.60 }
-  };
-
   var fmt = 'feed';
   var view = 'all';
-  var focusKey = null;
   var selftest = false;
   var texFlipY = false;
   try {
     var qs = new URLSearchParams(location.search);
     if (qs.get('fmt')) fmt = qs.get('fmt');
     if (qs.get('view')) view = qs.get('view');
-    if (qs.get('focus')) focusKey = qs.get('focus');
+    if (qs.get('focus')) view = qs.get('focus');
     if (qs.get('res')) RENDER_LONG = Math.max(256, parseInt(qs.get('res'), 10) || RENDER_LONG);
     if (qs.get('selftest')) selftest = true;
     if (qs.get('flipy') === '1') texFlipY = true;
@@ -142,8 +142,15 @@
 
   /* ------------------------------------------------------------ modelos */
   var loader = new THREE.GLTFLoader();
-  var devices = {};   // key -> { pivot, root, screen }
-  var screens = {};   // key -> mesh de la pantalla
+  var devices = {};       // id -> { id, type, label, pivot, root, screen, half, offset, slotP, slotS }
+  var deviceOrder = [];   // ids en orden de creación
+  var typeCount = {};     // type -> nº de instancias creadas
+  var TYPE_LABEL = { phone: 'Móvil', tablet: 'Tablet', laptop: 'PC' };
+  var DEVICE_GLB = {
+    phone:  'models/apple_iphone_18_pro_max_black_2026.glb',
+    tablet: 'models/galaxy_tab_s8_ultra.glb',
+    laptop: 'models/huawei_matebook_x_screen.glb'
+  };
 
   function loadGLB(url) {
     return new Promise(function (res, rej) {
@@ -212,17 +219,31 @@
     });
   }
 
-  function addDevice(key, url) {
-    return loadGLB(url).then(function (root) {
-      var screen = prep(root, ORIENT[key]);
+  function addDevice(type) {
+    return loadGLB(DEVICE_GLB[type]).then(function (root) {
+      var screen = prep(root, ORIENT[type]);
       tintDevice(root);
       var pivot = new THREE.Group();
       pivot.add(root);
       stage.add(pivot);
       var bb = new THREE.Box3().setFromObject(root);
       var sz = bb.getSize(new THREE.Vector3());
-      devices[key] = { pivot: pivot, root: root, screen: screen, half: { x: sz.x / 2, y: sz.y / 2 } };
-      screens[key] = screen;
+      typeCount[type] = (typeCount[type] || 0) + 1;
+      var id = typeCount[type] > 1 ? (type + '-' + typeCount[type]) : type;
+      devices[id] = {
+        id: id, type: type,
+        label: TYPE_LABEL[type] + (typeCount[type] > 1 ? ' ' + typeCount[type] : ''),
+        pivot: pivot, root: root, screen: screen,
+        half: { x: sz.x / 2, y: sz.y / 2 },
+        offset: { x: 0, y: 0 },
+        adj: { rx: 0, ry: 0, rz: 0, dz: 0 },
+        slotP: { x: 0, y: 0, z: 0 }, slotS: 1
+      };
+      deviceOrder.push(id);
+      applyLayout(false);
+      buildScreenRows();
+      updateTools();
+      return tryAuto(id, AUTO[type]).then(function () { return id; });
     });
   }
 
@@ -232,13 +253,13 @@
   // screenshot se pinta a resolución completa y sin iluminación.
 
   Promise.all([
-    addDevice('phone',  'models/apple_iphone_18_pro_max_black_2026.glb'),
-    addDevice('tablet', 'models/galaxy_tab_s8_ultra.glb'),
-    addDevice('laptop', 'models/huawei_matebook_x_screen.glb')
+    addDevice('phone'),
+    addDevice('tablet'),
+    addDevice('laptop')
   ]).then(function () {
     applyLayout(true);
     loading.style.display = 'none';
-    runAutoScreens().then(function () { if (selftest) runSelfTest(); });
+    if (selftest) runSelfTest();
   }).catch(function (e) {
     fail('No se pudieron cargar los modelos GLB. Abre la página con un servidor local (abrir.bat). Detalle: ' + (e && e.message ? e.message : e));
   });
@@ -254,13 +275,13 @@
     return tex;
   }
 
-  function applyScreenshot(kind, img) {
-    var mesh = screens[kind];
-    if (!mesh) return;
-    var o = ORIENT[kind] || {};
-    var dev = devices[kind];
+  function applyScreenshot(id, img) {
+    var dev = devices[id];
+    if (!dev || !dev.screen) return;
+    var mesh = dev.screen;
+    var o = ORIENT[dev.type] || {};
     var tex = makeTexture(img);
-    var uv = dev && dev.root.userData.screenUV;
+    var uv = dev.root.userData.screenUV;
     var ru = 1, rv = 1, ou = 0, ov = 0;
     // Ajusta la imagen al rectángulo UV real de la pantalla del modelo
     // (algunos modelos usan solo una franja del atlas, p.ej. la Galaxy Tab).
@@ -273,7 +294,7 @@
       tex.wrapT = THREE.RepeatWrapping;
     }
     var fx = o.flipX;
-    if (fx === undefined) fx = devices[kind] && devices[kind].root.userData.flipX;
+    if (fx === undefined) fx = dev.root.userData.flipX;
     if (fx) { ou = uv ? uv.uMax * ru : 1; ru = -ru; }
     if (o.flipY) { ov = uv ? uv.vMax * rv : 1; rv = -rv; }
     tex.repeat.set(ru, rv);
@@ -286,44 +307,64 @@
     tablet: ['screns/tablet.jpeg', 'tablet.jpeg', 'app-screenshot.png'],
     laptop: ['screns/pc_screen.png', 'pc_screen.png', 'app-screenshot.png']
   };
-  function tryAuto(kind, list) {
+  function tryAuto(id, list) {
     return new Promise(function (resolve) {
       if (!list.length) { resolve(); return; }
       var img = new Image();
-      img.onload = function () { applyScreenshot(kind, img); resolve(); };
-      img.onerror = function () { tryAuto(kind, list.slice(1)).then(resolve); };
+      img.onload = function () { applyScreenshot(id, img); resolve(); };
+      img.onerror = function () { tryAuto(id, list.slice(1)).then(resolve); };
       img.src = list[0];
     });
   }
-  function runAutoScreens() {
-    return Promise.all(Object.keys(AUTO).map(function (k) { return tryAuto(k, AUTO[k]); }));
+
+  // una fila de subida de pantalla por cada equipo (se regenera al añadir uno)
+  function buildScreenRows() {
+    var host = document.getElementById('screens');
+    if (!host) return;
+    host.innerHTML = '';
+    deviceOrder.forEach(function (id) {
+      var d = devices[id];
+      var row = document.createElement('div');
+      row.className = 'srow';
+
+      var lab = document.createElement('label');
+      lab.className = 'upload';
+      lab.innerHTML = '<i class="fa fa-image"></i> ' + d.label;
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.hidden = true;
+      input.addEventListener('change', function () {
+        var f = input.files && input.files[0];
+        if (!f) return;
+        var url = URL.createObjectURL(f);
+        var img = new Image();
+        img.onload = function () { applyScreenshot(id, img); URL.revokeObjectURL(url); };
+        img.onerror = function () { fail('No se pudo leer la imagen. Usa PNG o JPG.'); };
+        img.src = url;
+      });
+      lab.appendChild(input);
+      row.appendChild(lab);
+      host.appendChild(row);
+    });
   }
 
-  [['up-phone', 'phone'], ['up-tablet', 'tablet'], ['up-laptop', 'laptop']].forEach(function (pair) {
-    var input = document.getElementById(pair[0]);
-    if (!input) return;
-    input.addEventListener('change', function () {
-      var f = input.files && input.files[0];
-      if (!f) return;
-      var url = URL.createObjectURL(f);
-      var img = new Image();
-      img.onload = function () { applyScreenshot(pair[1], img); URL.revokeObjectURL(url); };
-      img.onerror = function () { fail('No se pudo leer la imagen. Usa PNG o JPG.'); };
-      img.src = url;
-    });
-  });
-
   /* ----------------------------------------------------------- animación */
-  var ORDER = ['phone', 'tablet', 'laptop'];
+  function visibleIds() {
+    return deviceOrder.filter(function (id) { return !!devices[id]; });
+  }
+  function heroDefault() {
+    var ids = visibleIds();
+    return ids.length ? ids[0] : 'phone';
+  }
 
-  // slot que le toca a cada equipo: el seleccionado (o el celular por defecto)
+  // slot que le toca a cada equipo: el seleccionado (o el primero por defecto)
   // va al hero y los demás a los huecos "behind".
   function slotFor(key) {
-    if (focusKey) return (key === focusKey) ? FOCUS[fmt] : null;
     var L = LAYOUT[fmt];
-    var heroKey = (view !== 'all' && ORDER.indexOf(view) !== -1) ? view : 'phone';
+    var heroKey = (view !== 'all' && devices[view]) ? view : heroDefault();
     if (key === heroKey) return L.hero;
-    var others = ORDER.filter(function (k) { return k !== heroKey; });
+    var others = visibleIds().filter(function (k) { return k !== heroKey; });
     var idx = others.indexOf(key);
     return L.behind[idx] || L.behind[L.behind.length - 1];
   }
@@ -356,7 +397,7 @@
   function applyLayout(instant) {
     var st = LAYOUT[fmt].stage;
     var list = [];
-    Object.keys(devices).forEach(function (key) {
+    visibleIds().forEach(function (key) {
       var s = slotFor(key);
       devices[key].pivot.visible = !!s;
       if (!s) return;
@@ -366,24 +407,27 @@
     separate(list);
     list.forEach(function (e) {
       var d = devices[e.key];
+      d.slotP = { x: e.x, y: e.y, z: e.z };
+      d.slotS = e.s;
+      var gx = e.x + d.offset.x, gy = e.y + d.offset.y;
       if (instant) {
-        d.pivot.position.set(e.x, e.y, e.z);
+        d.pivot.position.set(gx, gy, e.z);
         d.pivot.rotation.y = e.ry;
         d.pivot.userData.scale = e.s;
         d.pivot.scale.setScalar(e.s);
       }
-      d.pivot.userData.goal = { p: [e.x, e.y, e.z], ry: e.ry, s: e.s };
+      d.pivot.userData.goal = { p: [gx, gy, e.z], ry: e.ry, s: e.s };
     });
     stage.userData.goal = { scale: st.scale, y: st.y };
     if (instant) {
       stage.scale.setScalar(st.scale);
       stage.position.y = st.y;
     }
-    card.classList.toggle('focused', !!focusKey);
   }
 
   var clock = new THREE.Clock();
-  var drag = { active: false, x: 0, y: 0, sx: 0, sy: 0, moved: false, ry: 0, rx: 0, tRy: 0, tRx: 0 };
+  var drag = { active: false, x: 0, y: 0, sx: 0, sy: 0, moved: false, ry: 0, rx: 0, tRy: 0, tRx: 0,
+               mode: null, id: null, plane: null, localStart: null, pivotStart: null };
 
   function tick() {
     requestAnimationFrame(tick);
@@ -393,8 +437,11 @@
       var d = devices[key];
       var g = d.pivot.userData.goal;
       if (!g) return;
-      d.pivot.position.lerp(new THREE.Vector3(g.p[0], g.p[1], g.p[2]), 0.12);
-      d.pivot.rotation.y += (g.ry - d.pivot.rotation.y) * 0.12;
+      var a = d.adj || { rx: 0, ry: 0, rz: 0, dz: 0 };
+      d.pivot.position.lerp(new THREE.Vector3(g.p[0], g.p[1], g.p[2] + a.dz), 0.12);
+      d.pivot.rotation.x += (a.rx - d.pivot.rotation.x) * 0.12;
+      d.pivot.rotation.y += ((g.ry + a.ry) - d.pivot.rotation.y) * 0.12;
+      d.pivot.rotation.z += (a.rz - d.pivot.rotation.z) * 0.12;
       var cs = d.pivot.scale.x;
       d.pivot.scale.setScalar(cs + (g.s - cs) * 0.12);
     });
@@ -459,34 +506,86 @@
     var hit = raycaster.intersectObjects(roots, true)[0];
     return hit ? keyForObject(hit.object) : null;
   }
-  function setFocus(key) {
-    focusKey = key || null;
-    if (focusKey) { drag.ry = drag.tRy = 0; drag.rx = drag.tRx = 0; }
+  function setView(v) {
+    view = (v === 'all' || devices[v]) ? v : 'all';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === view);
+    });
     applyLayout(false);
+    updateTools();
   }
+
+  // punto de la escena (coordenadas locales del stage) bajo el cursor,
+  // proyectado sobre el plano de arrastre.
+  var planeN = new THREE.Vector3();
+  var tmpQ = new THREE.Quaternion();
+  var tmpP = new THREE.Vector3();
+  function localOnPlane(clientX, clientY) {
+    var rc = canvas.getBoundingClientRect();
+    ndc.x = ((clientX - rc.left) / rc.width) * 2 - 1;
+    ndc.y = -((clientY - rc.top) / rc.height) * 2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    if (!raycaster.ray.intersectPlane(drag.plane, tmpP)) return null;
+    return stage.worldToLocal(tmpP.clone());
+  }
+
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
   canvas.addEventListener('pointerdown', function (e) {
     drag.active = true; drag.x = e.clientX; drag.y = e.clientY;
     drag.sx = e.clientX; drag.sy = e.clientY; drag.moved = false;
+    drag.mode = 'rotate'; drag.id = null;
+
+    // arrastrar = mover el equipo bajo el cursor; Shift o botón derecho = girar
+    if (e.button === 2 || e.shiftKey) return;
+    var key = deviceAt(e.clientX, e.clientY);
+    if (!key) return;
+    var d = devices[key];
+    stage.getWorldQuaternion(tmpQ);
+    planeN.set(0, 0, 1).applyQuaternion(tmpQ);
+    d.pivot.getWorldPosition(tmpP);
+    drag.plane = new THREE.Plane().setFromNormalAndCoplanarPoint(planeN.clone(), tmpP.clone());
+    var local = localOnPlane(e.clientX, e.clientY);
+    if (!local) return;
+    drag.mode = 'move'; drag.id = key;
+    drag.localStart = local;
+    drag.pivotStart = { x: d.slotP.x + d.offset.x, y: d.slotP.y + d.offset.y };
   });
+
   window.addEventListener('pointerup', function (e) {
     if (!drag.active) return;
     drag.active = false;
-    if (drag.moved) return;
-    var key = deviceAt(e.clientX, e.clientY);
-    if (key) setFocus(key === focusKey ? null : key);
-    else if (focusKey) setFocus(null);
+    var mode = drag.mode, id = drag.id, moved = drag.moved;
+    drag.mode = null; drag.id = null;
+    if (moved) return;
+    if (mode === 'move' && id) setView(view === id ? 'all' : id);
+    else if (mode === 'rotate' && view !== 'all') setView('all');
   });
+
   window.addEventListener('pointermove', function (e) {
     if (!drag.active) return;
     if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 6) drag.moved = true;
-    drag.tRy += (e.clientX - drag.x) * 0.006;
-    drag.tRx += (e.clientY - drag.y) * 0.004;
-    drag.tRx = Math.max(-0.5, Math.min(0.5, drag.tRx));
+    if (drag.mode === 'move' && drag.id) {
+      var local = localOnPlane(e.clientX, e.clientY);
+      if (local) {
+        var d = devices[drag.id];
+        var nx = drag.pivotStart.x + (local.x - drag.localStart.x);
+        var ny = drag.pivotStart.y + (local.y - drag.localStart.y);
+        d.offset.x = nx - d.slotP.x;
+        d.offset.y = ny - d.slotP.y;
+        d.pivot.position.x = nx; d.pivot.position.y = ny;
+        if (d.pivot.userData.goal) { d.pivot.userData.goal.p[0] = nx; d.pivot.userData.goal.p[1] = ny; }
+      }
+    } else {
+      drag.tRy += (e.clientX - drag.x) * 0.006;
+      drag.tRx += (e.clientY - drag.y) * 0.004;
+      drag.tRx = Math.max(-0.5, Math.min(0.5, drag.tRx));
+    }
     drag.x = e.clientX; drag.y = e.clientY;
   });
+
   window.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && focusKey) setFocus(null);
+    if (e.key === 'Escape' && view !== 'all') setView('all');
   });
 
   /* -------------------------------------------------------- botones UI */
@@ -497,22 +596,90 @@
   Array.prototype.forEach.call(document.querySelectorAll('[data-fmt]'), function (b) {
     b.addEventListener('click', function () {
       fmt = b.getAttribute('data-fmt');
-      focusKey = null;
       card.className = 'card fmt-' + fmt + (card.classList.contains('show-safe') ? ' show-safe' : '');
       setActive('[data-fmt]', b);
       applyLayout(false);
     });
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
+    b.addEventListener('click', function () { setView(b.getAttribute('data-view')); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-add]'), function (b) {
     b.addEventListener('click', function () {
-      view = b.getAttribute('data-view');
-      focusKey = null;
-      setActive('[data-view]', b);
-      applyLayout(false);
+      var t = b.getAttribute('data-add');
+      b.disabled = true;
+      addDevice(t).then(function () { b.disabled = false; })
+        .catch(function (e) { b.disabled = false; fail('No se pudo añadir el equipo: ' + (e && e.message ? e.message : e)); });
     });
   });
   var safe = document.getElementById('safe');
   if (safe) safe.addEventListener('change', function () { card.classList.toggle('show-safe', safe.checked); });
+
+  /* ------------------------------------- tools del modelo seleccionado */
+  var DEG = Math.PI / 180;
+  var modelTools = document.getElementById('model-tools');
+  var toolsTitle = document.getElementById('model-tools-title');
+  var sliders = {
+    rx: document.getElementById('rot-x'),
+    ry: document.getElementById('rot-y'),
+    rz: document.getElementById('rot-z'),
+    dz: document.getElementById('zoom')
+  };
+  var outs = {
+    rx: document.getElementById('rot-x-v'),
+    ry: document.getElementById('rot-y-v'),
+    rz: document.getElementById('rot-z-v'),
+    dz: document.getElementById('zoom-v')
+  };
+
+  function currentAdj() {
+    var d = devices[view];
+    return (view !== 'all' && d) ? d.adj : null;
+  }
+  function updateOut() {
+    if (!outs.rx) return;
+    outs.rx.textContent = sliders.rx.value + '\u00B0';
+    outs.ry.textContent = sliders.ry.value + '\u00B0';
+    outs.rz.textContent = sliders.rz.value + '\u00B0';
+    outs.dz.textContent = (+sliders.dz.value).toFixed(2).replace(/\.?0+$/, '') || '0';
+  }
+  function updateTools() {
+    if (!modelTools) return;
+    var d = currentAdj();
+    if (!d) { modelTools.hidden = true; return; }
+    modelTools.hidden = false;
+    if (toolsTitle) toolsTitle.textContent = 'Ajustar: ' + devices[view].label;
+    sliders.rx.value = Math.round(d.rx / DEG);
+    sliders.ry.value = Math.round(d.ry / DEG);
+    sliders.rz.value = Math.round(d.rz / DEG);
+    sliders.dz.value = d.dz;
+    updateOut();
+  }
+  function bindSlider(el, key) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+      var d = currentAdj();
+      updateOut();
+      if (!d) return;
+      if (key === 'dz') d.dz = parseFloat(el.value) || 0;
+      else d[key] = (parseFloat(el.value) || 0) * DEG;
+    });
+  }
+  bindSlider(sliders.rx, 'rx');
+  bindSlider(sliders.ry, 'ry');
+  bindSlider(sliders.rz, 'rz');
+  bindSlider(sliders.dz, 'dz');
+
+  var modelReset = document.getElementById('model-reset');
+  if (modelReset) modelReset.addEventListener('click', function () {
+    var d = currentAdj();
+    if (!d) return;
+    d.rx = d.ry = d.rz = d.dz = 0;
+    updateTools();
+  });
+
+  updateTools();
+
 
   // estado inicial (permite ?fmt=reel&view=laptop)
   card.className = 'card fmt-' + fmt;

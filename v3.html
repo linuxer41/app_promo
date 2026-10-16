@@ -28,11 +28,29 @@
       </div>
     </div>
     <hr />
+    <div class="tool-group" id="model-tools" hidden>
+      <span id="model-tools-title">Ajustar modelo</span>
+      <label class="slider"><span>Rotar X</span><b id="rot-x-v">0&deg;</b><input type="range" id="rot-x" min="-180" max="180" step="1" value="0" /></label>
+      <label class="slider"><span>Rotar Y</span><b id="rot-y-v">0&deg;</b><input type="range" id="rot-y" min="-180" max="180" step="1" value="0" /></label>
+      <label class="slider"><span>Rotar Z</span><b id="rot-z-v">0&deg;</b><input type="range" id="rot-z" min="-180" max="180" step="1" value="0" /></label>
+      <label class="slider"><span>Acercar / alejar</span><b id="zoom-v">0</b><input type="range" id="zoom" min="-2.5" max="2.5" step="0.05" value="0" /></label>
+      <button id="model-reset">Restablecer</button>
+    </div>
+    <hr />
+    <div class="tool-group">
+      <span>Equipos</span>
+      <div class="row">
+        <button data-add="phone">+ Móvil</button>
+        <button data-add="tablet">+ Tablet</button>
+      </div>
+      <div class="row">
+        <button data-add="laptop">+ PC</button>
+      </div>
+    </div>
+    <hr />
     <div class="tool-group">
       <span>Pantalla (screenshot)</span>
-      <label class="upload"><i class="fa fa-image"></i> Móvil <input type="file" id="up-phone" accept="image/*" hidden /></label>
-      <label class="upload"><i class="fa fa-image"></i> Tablet <input type="file" id="up-tablet" accept="image/*" hidden /></label>
-      <label class="upload"><i class="fa fa-image"></i> PC <input type="file" id="up-laptop" accept="image/*" hidden /></label>
+      <div id="screens"></div>
     </div>
     <hr />
     <div class="tool-group">
@@ -41,7 +59,7 @@
     <div class="tool-group">
       <button class="snap" id="snap"><i class="fa fa-camera"></i> Descargar PNG 4K</button>
     </div>
-    <p class="hint">Arrastra para girar los equipos. Clic en un equipo para acercarlo; clic de nuevo (o Esc) para volver.</p>
+    <p class="hint">Arrastra un equipo para moverlo. Shift + arrastrar (o botón derecho) gira la escena. Clic en un equipo para traerlo al frente.</p>
   </aside>
 
   <div class="card fmt-feed" id="card">
