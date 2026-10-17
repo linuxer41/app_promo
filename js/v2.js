@@ -85,10 +85,10 @@
   var LAYOUT = {
     feed: {
       stage: { scale: 0.80, y: 0.14 },
-      hero:   { p: [ 1.22, 0.10, 0.95], ry: -0.05, scale: 3.55 },
+      hero:   { p: [ 1.30, 0.06, 0.95], ry: -0.05, scale: 3.72 },
       behind: [
-        { p: [ 0.82, 1.02, -0.55], ry:  0.34, scale: 1.50 },
-        { p: [ 1.24, -0.80, -0.55], ry: -0.24, scale: 1.50 }
+        { p: [ 0.74, 1.08, -0.55], ry:  0.34, scale: 1.52 },
+        { p: [ 1.30, -0.92, -0.55], ry: -0.26, scale: 1.52 }
       ],
       phones: {
         hero:   { p: [ 1.70, 0.70, 0.70], ry: -0.16, scale: 2.35 },
@@ -114,17 +114,17 @@
       }
     },
     reel: {
-      stage: { scale: 0.60, y: -0.30 },
-      hero:   { p: [ 0.45, 0.02, 0.95], ry: -0.04, scale: 2.55 },
+      stage: { scale: 0.70, y: -0.46 },
+      hero:   { p: [ 0.54, 0.06, 0.95], ry: -0.05, scale: 3.10 },
       behind: [
-        { p: [-0.82, 0.62, -0.55], ry:  0.30, scale: 1.38 },
-        { p: [ 0.82, -0.58, -0.55], ry: -0.22, scale: 1.38 }
+        { p: [-1.04, 0.90, -0.60], ry:  0.32, scale: 1.70 },
+        { p: [ 0.90, -0.96, -0.60], ry: -0.26, scale: 1.60 }
       ],
       phones: {
-        hero:   { p: [ 0.45, 1.40, 0.70], ry: -0.12, scale: 2.05 },
+        hero:   { p: [ 0.42, 1.45, 0.70], ry: -0.12, scale: 2.60 },
         behind: [
-          { p: [ 0.15, 0.60, 0.20], ry:  0.04, scale: 2.05 },
-          { p: [-0.15, -0.20, -0.30], ry:  0.16, scale: 2.05 }
+          { p: [ 0.10, 0.55, 0.20], ry:  0.04, scale: 2.60 },
+          { p: [-0.22, -0.35, -0.30], ry:  0.16, scale: 2.60 }
         ]
       }
     }
@@ -217,7 +217,7 @@
   // Guarda, para CADA formato, qué equipos tiene su escena y su posición/
   // escala/giro/selección. Al recargar se reconstruyen todos los formatos tal
   // cual los dejaste. Cada formato es totalmente independiente del resto.
-  var LS_KEY = 'resto_v2_state_v2';
+  var LS_KEY = 'resto_v2_state_v3';
   var pendingState = null;
   function loadState() {
     try {
@@ -225,18 +225,73 @@
       if (raw) pendingState = JSON.parse(raw);
     } catch (e) { pendingState = null; }
   }
+  // Empaqueta TODO el diseño: posiciones/giros/escalas (mem), qué equipos hay,
+  // qué screenshot usa cada uno y el texto (headline) elegido.
+  function serialize(includeDataUrls) {
+    var types = {}, mems = {}, screens = {};
+    Object.keys(devices).forEach(function (id) {
+      var d = devices[id];
+      if (!d) return;
+      types[id] = d.type;
+      if (d.mem) mems[id] = d.mem;
+      if (d.screenSrc && (includeDataUrls || d.screenSrc.indexOf('data:') !== 0)) screens[id] = d.screenSrc;
+    });
+    return {
+      app: 'app-promo-v2', version: 1,
+      order: fmtState, types: types, mems: mems, screens: screens,
+      design: design, headlineIdx: headlineIdx
+    };
+  }
   function saveState() {
-    try {
-      var types = {}, mems = {};
-      Object.keys(devices).forEach(function (id) {
-        types[id] = devices[id].type;
-        if (devices[id].mem) mems[id] = devices[id].mem;
+    try { localStorage.setItem(LS_KEY, JSON.stringify(serialize(false))); } catch (e) {}
+  }
+  // reconstruye TODA la escena desde un objeto de diseño (JSON o localStorage)
+  function clearStage() {
+    Object.keys(devices).forEach(function (id) {
+      if (devices[id] && devices[id].pivot) stage.remove(devices[id].pivot);
+    });
+    devices = {};
+    typeCount = {};
+  }
+  function applyScreenSrc(id, src) {
+    return new Promise(function (resolve) {
+      if (!src) { resolve(); return; }
+      var img = new Image();
+      img.onload = function () { applyScreenshot(id, img, src); resolve(); };
+      img.onerror = function () { resolve(); };
+      img.src = src;
+    });
+  }
+  function applyState(state) {
+    if (!state || !state.types || !Object.keys(state.types).length) return setDesign(design);
+    loadingScene = true;
+    clearStage();
+    fmtState = state.order || {};
+    if (state.design && DESIGNS[state.design]) design = state.design;
+    if (state.headlineIdx !== undefined && state.headlineIdx !== null && !isNaN(state.headlineIdx)) headlineIdx = parseInt(state.headlineIdx, 10);
+    var types = state.types;
+    var ids = Object.keys(types);
+    return Promise.all(ids.map(function (id) {
+      return createDevice(types[id], id).then(function () {
+        if (state.screens && state.screens[id]) return applyScreenSrc(id, state.screens[id]);
+        return autoScreen(id, types[id]);
       });
-      localStorage.setItem(LS_KEY, JSON.stringify({
-        order: fmtState, types: types, mems: mems,
-        design: design, headlineIdx: headlineIdx
-      }));
-    } catch (e) {}
+    })).then(function () {
+      ids.forEach(function (id) {
+        if (state.mems && state.mems[id] && devices[id]) devices[id].mem = state.mems[id];
+      });
+      ensureTypeCounts();
+      loadingScene = false;
+      if (sel && !devices[sel]) sel = null;
+      var st = F();
+      if (!st.order.length) { markDesign(); return setDesign(design); }
+      buildScreenRows();
+      applyLayout(true);
+      updateTools();
+      markDesign();
+      setHeadline(headlineIdx);
+      return null;
+    }).catch(function (e) { loadingScene = false; throw e; });
   }
   var TYPE_LABEL = { phone: 'Móvil', tablet: 'Tablet', laptop: 'PC' };
   var DEVICE_GLB = {
@@ -360,13 +415,20 @@
       buildScreenRows();
       updateTools();
       saveState();
-      var autos = AUTO[type];
-      if (type === 'phone' && autos.length > 1) {   // variar captura entre móviles
-        var off = (n - 1) % autos.length;
-        autos = autos.slice(off).concat(autos.slice(0, off));
-      }
-      return tryAuto(id, autos).then(function () { return id; });
+      return autoScreen(id, type).then(function () { return id; });
     });
+  }
+
+  // aplica una captura por defecto a la pantalla del equipo (varía entre móviles)
+  function autoScreen(id, type) {
+    var autos = AUTO[type] || [];
+    if (type === 'phone' && autos.length > 1) {
+      var m = /-(\d+)$/.exec(id);
+      var n = m ? parseInt(m[1], 10) : 1;
+      var off = (n - 1) % autos.length;
+      autos = autos.slice(off).concat(autos.slice(0, off));
+    }
+    return tryAuto(id, autos);
   }
 
   // Modelos cuyo display comparte una única malla/material con el cuerpo
@@ -504,27 +566,12 @@
 
   function initScene() {
     loadState();
-    var types = pendingState && pendingState.types;
-    var ids = types ? Object.keys(types) : [];
     if (qsDesign) design = qsDesign;                          // ?design= fuerza el diseño
-    else if (pendingState && pendingState.design) design = pendingState.design;
-    if (!ids.length) return setDesign(design);                // primera visita: escena por defecto
-    return Promise.all(ids.map(function (id) { return createDevice(types[id], id); })).then(function () {
-      ids.forEach(function (id) {
-        if (pendingState.mems && pendingState.mems[id] && devices[id]) devices[id].mem = pendingState.mems[id];
-      });
-      if (pendingState.order) fmtState = pendingState.order;
-      if (pendingState.headlineIdx !== undefined && !isNaN(pendingState.headlineIdx)) headlineIdx = parseInt(pendingState.headlineIdx, 10);
-      ensureTypeCounts();
-      var st = F();
-      if (!st.order.length) { markDesign(); return setDesign(design); }  // formato actual sin equipos
-      buildScreenRows();
-      applyLayout(true);
-      updateTools();
-      markDesign();
-      saveState();
-      return null;
-    });
+    else if (pendingState && pendingState.design && DESIGNS[pendingState.design]) design = pendingState.design;
+    if (pendingState && pendingState.types && Object.keys(pendingState.types).length) {
+      return applyState(pendingState);                        // reconstruye lo guardado
+    }
+    return setDesign(design);                                 // primera visita: escena por defecto
   }
 
   initScene().then(function () {
@@ -547,9 +594,10 @@
     return tex;
   }
 
-  function applyScreenshot(id, img) {
+  function applyScreenshot(id, img, src) {
     var dev = devices[id];
     if (!dev || !dev.screen) return;
+    dev.screenSrc = src || img.src;   // se guarda en el JSON para poder restaurarlo
     var mesh = dev.screen;
     var o = ORIENT[dev.type] || {};
     var tex = makeTexture(img);
@@ -583,7 +631,7 @@
     return new Promise(function (resolve) {
       if (!list.length) { resolve(); return; }
       var img = new Image();
-      img.onload = function () { applyScreenshot(id, img); resolve(); };
+      img.onload = function () { applyScreenshot(id, img, list[0]); resolve(); };
       img.onerror = function () { tryAuto(id, list.slice(1)).then(resolve); };
       img.src = list[0];
     });
@@ -609,11 +657,16 @@
       input.addEventListener('change', function () {
         var f = input.files && input.files[0];
         if (!f) return;
-        var url = URL.createObjectURL(f);
-        var img = new Image();
-        img.onload = function () { applyScreenshot(id, img); URL.revokeObjectURL(url); };
-        img.onerror = function () { fail('No se pudo leer la imagen. Usa PNG o JPG.'); };
-        img.src = url;
+        var fr = new FileReader();
+        fr.onload = function () {
+          var dataUrl = fr.result;
+          var img = new Image();
+          img.onload = function () { applyScreenshot(id, img, dataUrl); };
+          img.onerror = function () { fail('No se pudo leer la imagen. Usa PNG o JPG.'); };
+          img.src = dataUrl;
+        };
+        fr.onerror = function () { fail('No se pudo leer el archivo.'); };
+        fr.readAsDataURL(f);
       });
       lab.appendChild(input);
       row.appendChild(lab);
@@ -894,34 +947,32 @@
   /* -------------------------------------------------------- botones UI */
   function setActive(selector, btn) {
     Array.prototype.forEach.call(document.querySelectorAll(selector), function (b) { b.classList.remove('active'); });
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
   }
+  // cambia de formato: cada formato es una escena INDEPENDIENTE con sus propios
+  // equipos. Si el formato aún no tiene escena, se crea una por defecto nueva.
+  function selectFormat(nf) {
+    var stCur = F();
+    stCur.sel = sel;
+    stCur.view = view;
+    fmt = nf;
+    var stN = F();
+    sel = stN.sel; view = stN.view;
+    card.className = 'card fmt-' + fmt + (card.classList.contains('show-safe') ? ' show-safe' : '');
+    setActive('[data-fmt]', document.querySelector('[data-fmt="' + fmt + '"]'));
+    setActive('[data-view]', document.querySelector('[data-view="' + view + '"]'));
+    updateSnapLabel();
+    var live = stN.order.filter(function (id) { return !!devices[id]; });
+    if (!live.length) return setDesign(design);          // primera visita: escena nueva
+    buildScreenRows();                                   // lista de pantallas del formato
+    applyLayout(false);
+    updateTools();
+    saveState();
+    return Promise.resolve(null);
+  }
+
   Array.prototype.forEach.call(document.querySelectorAll('[data-fmt]'), function (b) {
-    b.addEventListener('click', function () {
-      var nf = b.getAttribute('data-fmt');
-      // memoria visible del formato actual antes de irnos
-      var stCur = F();
-      stCur.sel = sel;
-      stCur.view = view;
-      // pasar al nuevo formato: restaurar su selección/vista
-      fmt = nf;
-      var stN = F();
-      sel = stN.sel; view = stN.view;
-      card.className = 'card fmt-' + fmt + (card.classList.contains('show-safe') ? ' show-safe' : '');
-      setActive('[data-fmt]', b);
-      setActive('[data-view]', document.querySelector('[data-view="' + view + '"]'));
-      updateSnapLabel();
-      var live = stN.order.filter(function (id) { return !!devices[id]; });
-      if (!live.length) {
-        // primera visita a este formato: crea su propia escena por defecto
-        // (equipos independientes; no afecta a los demás formatos)
-        setDesign(design);
-      } else {
-        applyLayout(false);
-        updateTools();
-        saveState();
-      }
-    });
+    b.addEventListener('click', function () { selectFormat(b.getAttribute('data-fmt')); });
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (b) {
     b.addEventListener('click', function () { setView(b.getAttribute('data-view')); });
@@ -1080,39 +1131,96 @@
     if (b) b.innerHTML = '<i class="fa fa-camera"></i> Descargar ' + s.w + '\u00D7' + s.h;
   }
 
-  // Renderiza la card en `targetFmt`, la convierte a imagen y llama cb(err, url, name).
-  function renderAd(targetFmt, cb) {
-    if (typeof htmlToImage === 'undefined') { cb(new Error('Falta libs/html-to-image.js (recarga con Ctrl+F5).')); return; }
-    var prevFmt = fmt, prevClass = card.className;
-    fmt = targetFmt;
-    card.className = 'card fmt-' + fmt;
-    var size = EXPORT[fmt];
-    var w = card.clientWidth || 600, h = card.clientHeight || 600;
-    var ratio = size.w / w;
+  // Renderiza la card en `targetFmt` SIN tocar lo que se ve en pantalla:
+  //  - el 3D se dibuja en un renderer FUERA de pantalla (no parpadea ni mueve nada)
+  //  - el DOM se captura sobre un clon oculto de la card
+  // Así el archivo sale idéntico a la vista previa de ese formato.
+  function snapshotScene() {
+    var s = {
+      fmt: fmt, camAspect: camera.aspect, camFov: camera.fov,
+      stageScale: stage.scale.x, stageY: stage.position.y,
+      stageGoal: stage.userData.goal ? { scale: stage.userData.goal.scale, y: stage.userData.goal.y } : null,
+      devs: {}
+    };
+    Object.keys(devices).forEach(function (id) {
+      var d = devices[id];
+      if (!d || !d.pivot) return;
+      s.devs[id] = {
+        px: d.pivot.position.x, py: d.pivot.position.y, pz: d.pivot.position.z,
+        rx: d.pivot.rotation.x, ry: d.pivot.rotation.y, rz: d.pivot.rotation.z,
+        sc: d.pivot.scale.x, vis: d.pivot.visible,
+        goal: d.pivot.userData.goal ? { p: d.pivot.userData.goal.p.slice(), ry: d.pivot.userData.goal.ry, s: d.pivot.userData.goal.s } : null,
+        slotP: d.slotP ? { x: d.slotP.x, y: d.slotP.y, z: d.slotP.z } : null,
+        slotS: d.slotS
+      };
+    });
+    return s;
+  }
+  function restoreScene(s) {
+    fmt = s.fmt;
+    camera.aspect = s.camAspect; camera.fov = s.camFov; camera.updateProjectionMatrix();
+    stage.scale.setScalar(s.stageScale); stage.position.y = s.stageY;
+    stage.userData.goal = s.stageGoal;
+    Object.keys(s.devs).forEach(function (id) {
+      var d = devices[id]; if (!d || !d.pivot) return;
+      var v = s.devs[id];
+      d.pivot.position.set(v.px, v.py, v.pz);
+      d.pivot.rotation.set(v.rx, v.ry, v.rz);
+      d.pivot.scale.setScalar(v.sc);
+      d.pivot.visible = v.vis;
+      d.pivot.userData.goal = v.goal;
+      d.slotP = v.slotP; d.slotS = v.slotS;
+    });
+  }
 
-    // 3D supersampleado para que la pantalla del modelo salga nítida a 1080
-    sizeRenderer(Math.max(size.w, size.h) * EXPORT_SS);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    applyLayout(true);
+  // captura el DOM en un clon oculto dimensionado al tamaño exacto de export
+  function captureClone(targetFmt, w, h, dataUrl, cb) {
+    var host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;z-index:-1;';
+    var clone = card.cloneNode(true);
+    clone.classList.remove('fmt-feed', 'fmt-portrait', 'fmt-reel');
+    clone.classList.add('fmt-' + targetFmt);
+    clone.style.cssText = 'position:relative;left:0;top:0;margin:0;border-radius:0;' +
+      'box-shadow:none;width:' + w + 'px;height:' + h + 'px;max-width:none;';
+    var cc = clone.querySelector('canvas');
+    if (cc && cc.parentNode) cc.parentNode.removeChild(cc);
+    var img = document.createElement('img');
+    img.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;';
+    clone.appendChild(img);
+    host.appendChild(clone);
+    document.body.appendChild(host);
+    function cleanup() { if (host.parentNode) host.parentNode.removeChild(host); }
+    img.onload = function () {
+      var job = ext === 'jpg'
+        ? htmlToImage.toJpeg(clone, { pixelRatio: 1, quality: 0.95, cacheBust: true })
+        : htmlToImage.toPng(clone, { pixelRatio: 1, cacheBust: true });
+      job.then(function (url) { cleanup(); cb(null, url); })
+         .catch(function (e) { cleanup(); cb(e); });
+    };
+    img.onerror = function () { cleanup(); cb(new Error('No se pudo leer el render 3D.')); };
+    img.src = dataUrl;
+  }
+
+  // Export FIEL para el formato que ya está en pantalla: captura la card EN VIVO
+  // tal cual, sin clon, sin cambiar cámara ni layout. Solo sube la resolución del
+  // 3D (visualmente idéntico) → el archivo sale igual que la vista previa.
+  function renderLive(targetFmt, cb) {
+    var size = EXPORT[targetFmt];
+    var w = size.w, h = size.h;
+    var cw = card.clientWidth || w, ch = card.clientHeight || h;
+    var ratio = w / cw;
+    sizeRenderer(Math.max(w, h) * EXPORT_SS);
     renderer.render(scene, camera);
     var data = renderer.domElement.toDataURL('image/png');
     sizeRenderer(RENDER_LONG);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
     renderer.render(scene, camera);
-
     var img = new Image();
-    img.style.cssText = 'position:absolute;inset:0;z-index:1;width:100%;height:100%;';
-    function finish() {
-      card.removeChild(img);
+    img.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;';
+    function done(url, err) {
+      if (img.parentNode) card.removeChild(img);
       canvas.style.visibility = '';
-      sizeRenderer(RENDER_LONG);
-      fmt = prevFmt;
-      card.className = prevClass;
-      resize();
-      applyLayout(true);
-      renderer.render(scene, camera);
+      if (err) cb(err);
+      else cb(null, url, 'resto-' + targetFmt + '-' + w + 'x' + h + '.' + ext);
     }
     img.onload = function () {
       canvas.style.visibility = 'hidden';
@@ -1120,19 +1228,44 @@
       var job = ext === 'jpg'
         ? htmlToImage.toJpeg(card, { pixelRatio: ratio, quality: 0.95, cacheBust: true })
         : htmlToImage.toPng(card, { pixelRatio: ratio, cacheBust: true });
-      job.then(function (url) {
-        finish();
-        cb(null, url, 'resto-' + targetFmt + '-' + size.w + 'x' + size.h + '.' + ext);
-      }).catch(function (e) {
-        finish();
-        cb(e);
-      });
+      job.then(function (url) { done(url); }).catch(function (e) { done(null, e); });
     };
-    img.onerror = function () {
-      fmt = prevFmt; card.className = prevClass; resize(); applyLayout(true);
-      cb(new Error('No se pudo leer el render 3D.'));
-    };
+    img.onerror = function () { done(null, new Error('No se pudo leer el render 3D.')); };
     img.src = data;
+  }
+
+  function renderClone(targetFmt, cb) {
+    var size = EXPORT[targetFmt];
+    var w = size.w, h = size.h;
+
+    // 1) 3D con el layout del formato destino, renderizado y restaurado en el
+    //    mismo instante (el navegador no llega a pintar el estado intermedio,
+    //    así que la vista previa NO cambia en absoluto).
+    var snap = snapshotScene();
+    fmt = targetFmt;
+    renderer.setPixelRatio(1);
+    renderer.setSize(Math.round(w * EXPORT_SS), Math.round(h * EXPORT_SS), false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    applyLayout(true);
+    renderer.render(scene, camera);
+    var data = renderer.domElement.toDataURL('image/png');
+    restoreScene(snap);                 // vuelve exactamente a como estaba
+    resize();                           // restaura el buffer de la vista previa
+    renderer.render(scene, camera);
+
+    // 2) DOM en un clon oculto (no se ve afectada la card real)
+    captureClone(targetFmt, w, h, data, function (err, url) {
+      cb(err, url, 'resto-' + targetFmt + '-' + w + 'x' + h + '.' + ext);
+    });
+  }
+
+  // Al exportar el formato actual se captura la card en vivo (idéntica a la vista).
+  // Para los otros formatos (Exportar todo) se reconstruye en un clon oculto.
+  function renderAd(targetFmt, cb) {
+    if (typeof htmlToImage === 'undefined') { cb(new Error('Falta libs/html-to-image.js (recarga con Ctrl+F5).')); return; }
+    if (targetFmt === fmt) return renderLive(targetFmt, cb);
+    return renderClone(targetFmt, cb);
   }
 
   function saveUrl(url, name) {
@@ -1183,6 +1316,41 @@
   if (snapBtn) snapBtn.addEventListener('click', function () { if (!exporting) exportOne(fmt); });
   var snapAll = document.getElementById('snap-all');
   if (snapAll) snapAll.addEventListener('click', exportAll);
+
+  // guardar / cargar el diseño completo en JSON (posiciones, screenshots y textos)
+  function exportJSON() {
+    try {
+      var data = JSON.stringify(serialize(true), null, 2);
+      var blob = new Blob([data], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'diseno-app-promo.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    } catch (e) { fail('No se pudo guardar el JSON: ' + (e && e.message ? e.message : e)); }
+  }
+  function importJSON(file) {
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      var state;
+      try { state = JSON.parse(fr.result); } catch (e) { fail('El archivo JSON no es válido.'); return; }
+      if (!state || !state.types || !Object.keys(state.types).length) { fail('El JSON no contiene un diseño válido.'); return; }
+      applyState(state).then(function () { saveState(); });
+    };
+    fr.onerror = function () { fail('No se pudo leer el archivo JSON.'); };
+    fr.readAsText(file);
+  }
+  var saveJson = document.getElementById('save-json');
+  if (saveJson) saveJson.addEventListener('click', exportJSON);
+  var loadJson = document.getElementById('load-json');
+  var jsonFile = document.getElementById('json-file');
+  if (loadJson && jsonFile) loadJson.addEventListener('click', function () { jsonFile.click(); });
+  if (jsonFile) jsonFile.addEventListener('change', function () {
+    importJSON(jsonFile.files && jsonFile.files[0]);
+    jsonFile.value = '';
+  });
 
   // selector de formato de archivo PNG / JPG
   var extPng = document.getElementById('ext-png');

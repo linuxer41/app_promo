@@ -161,13 +161,13 @@ body {
 /* funciones (fila inferior izquierda, con separadores verticales) */
 .pills {
   position: absolute; z-index: 3; left: 6cqw; bottom: 6cqw;
-  display: flex; align-items: flex-start; gap: 2.4cqw; max-width: 58cqw;
+  display: flex; align-items: flex-start; gap: 1.8cqw; max-width: 44cqw;
 }
-.pill { display: flex; align-items: flex-start; gap: 1cqw; }
-.pill + .pill { border-left: .22cqw solid rgba(15,23,42,.16); padding-left: 2.4cqw; }
+.pill { display: flex; align-items: flex-start; gap: 1cqw; min-width: 0; }
+.pill + .pill { border-left: .22cqw solid rgba(15,23,42,.16); padding-left: 1.8cqw; }
 .pill i { flex-shrink: 0; width: 2.5cqw; text-align: center; font-size: 2.3cqw; line-height: 1.15; color: var(--red); }
-.pill b { display: block; font-size: 2cqw; font-weight: 800; letter-spacing: -.03cqw; line-height: 1.1; color: var(--ink); }
-.pill span { display: block; font-size: 1.5cqw; font-weight: 500; color: var(--muted); line-height: 1.28; margin-top: .25cqw; }
+.pill b { display: block; font-size: 1.9cqw; font-weight: 800; letter-spacing: -.03cqw; line-height: 1.1; color: var(--ink); }
+.pill span { display: block; font-size: 1.4cqw; font-weight: 500; color: var(--muted); line-height: 1.26; margin-top: .25cqw; }
 
 /* CTA (tiendas, fila derecha) */
 .cta {
@@ -218,8 +218,7 @@ body {
 .card.fmt-reel .headline { left: 7cqw; top: 15cqw; transform: none; width: 74cqw; }
 .card.fmt-reel .headline h1 { font-size: 8.4cqw; }
 .card.fmt-reel .headline p { font-size: 2.8cqw; max-width: none; }
-.card.fmt-reel .pills { left: 7cqw; right: auto; bottom: 38cqw; display: grid; grid-template-columns: 1fr; gap: 1.4cqw; width: 46cqw; max-width: 46cqw; }
-.card.fmt-reel .pill + .pill { border-left: 0; padding-left: 0; border-top: .22cqw solid rgba(15,23,42,.16); padding-top: 1.4cqw; }
+.card.fmt-reel .pills { display: none; }
 .card.fmt-reel .cta { left: 7cqw; right: 16cqw; bottom: 28cqw; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; }
 .card.fmt-reel .cta .stores { justify-content: center; }
 

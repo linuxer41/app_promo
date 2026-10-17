@@ -2,9 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Resto — Anuncio v2</title>
-<link rel="stylesheet" href="css/v2.css?v=15" />
+<link rel="stylesheet" href="css/v2.css?v=29" />
 </head>
 <body>
   <aside class="tools">
@@ -64,6 +67,11 @@
       </div>
       <button class="snap" id="snap"><i class="fa fa-camera"></i> Descargar 1080&times;1080</button>
       <button id="snap-all"><i class="fa fa-camera"></i> Exportar todo (3)</button>
+      <div class="row">
+        <button id="save-json"><i class="fa fa-download"></i> Guardar JSON</button>
+        <button id="load-json"><i class="fa fa-upload"></i> Cargar JSON</button>
+      </div>
+      <input type="file" id="json-file" accept="application/json,.json" hidden />
     </div>
     <p class="hint">Arrastra un equipo para moverlo. Shift + arrastrar (o botón derecho) gira la escena. Clic en un equipo para seleccionarlo y ajustarlo (Escape para quitar).</p>
   </aside>
@@ -124,6 +132,6 @@
   <script src="libs/three.min.js"></script>
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/html-to-image.js"></script>
-  <script src="js/v2.js?v=15"></script>
+  <script src="js/v2.js?v=29"></script>
 </body>
 </html>
