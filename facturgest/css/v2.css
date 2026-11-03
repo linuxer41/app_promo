@@ -27,6 +27,9 @@
 .fa-bell-concierge::before { content: '\f562'; }
 .fa-kitchen-set::before     { content: '\e51a'; }
 .fa-cash-register::before   { content: '\f788'; }
+.fa-bolt::before            { content: '\f0e7'; }
+.fa-plug::before            { content: '\f1ec'; }
+.fa-shield-halved::before   { content: '\f3ed'; }
 .fa-camera::before          { content: '\f030'; }
 .fa-image::before           { content: '\f03e'; }
 .fa-circle-check::before    { content: '\f058'; }
@@ -38,8 +41,8 @@
 .fa-microsoft::before    { content: '\f3ca'; }
 
 :root {
-  --red: #DC2626;
-  --red-2: #B91C1C;
+  --red: #0070F3;
+  --red-2: #0056C4;
   --ink: #0F172A;
   --muted: #64748B;
   --line: rgba(15,23,42,.08);
@@ -76,7 +79,7 @@ body {
 .tools button:hover { border-color: var(--red); }
 .tools button.active { background: var(--red); border-color: var(--red); color: #fff; }
 .tools button.danger { border-color: var(--red); color: #fca5a5; }
-.tools button.danger:hover { background: rgba(220,38,38,.15); }
+.tools button.danger:hover { background: rgba(0,112,243,.15); }
 .tools button:active { transform: scale(.98); }
 .tools .row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .tools .row button { margin-top: 0; }
@@ -87,7 +90,7 @@ body {
 .upload { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12.5px; font-weight: 700;
   background: rgba(255,255,255,.04); border: 1px dashed rgba(255,255,255,.35); border-radius: 10px; padding: 9px 11px; margin-top: 7px;
   transition: border-color .2s, background .2s; }
-.upload:hover { border-color: var(--red); background: rgba(220,38,38,.12); }
+.upload:hover { border-color: var(--red); background: rgba(0,112,243,.12); }
 .tools button:disabled { opacity: .5; cursor: default; }
 #screens .srow { display: grid; }
 #screens .upload { width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -103,6 +106,10 @@ body {
   background: #ffffff;
   box-shadow: 0 30px 70px rgba(0,0,0,.55);
   isolation: isolate;
+  /* márgenes seguros: TODO el texto respeta estas guías (nunca se recorta) */
+  --safe-x: 6cqw;
+  --safe-top: 5.2cqw;
+  --safe-b: 6.4cqw;
 }
 .card.fmt-feed    { width: min(92vw, 92vh); aspect-ratio: 1 / 1; }
 .card.fmt-portrait{ width: min(92vw, 74vh); aspect-ratio: 4 / 5; }
@@ -112,14 +119,30 @@ body {
 .bg {
   position: absolute; inset: 0; z-index: 0;
   background:
-    radial-gradient(74% 60% at 92% 4%, rgba(220,38,38,.42), transparent 56%),
-    radial-gradient(60% 55% at 2% 100%, rgba(251,146,60,.30), transparent 60%),
-    radial-gradient(90% 70% at 50% 30%, rgba(255,255,255,.55), transparent 62%),
-    linear-gradient(160deg, #ffffff 0%, #fff2f2 42%, #e6ecf5 100%);
+    radial-gradient(82% 66% at 96% 0%, rgba(0,112,243,.62), transparent 58%),
+    radial-gradient(66% 62% at 0% 100%, rgba(96,165,250,.46), transparent 62%),
+    radial-gradient(58% 50% at 100% 100%, rgba(0,112,243,.28), transparent 62%),
+    radial-gradient(90% 70% at 50% 26%, rgba(255,255,255,.42), transparent 62%),
+    linear-gradient(160deg, #f0f6ff 0%, #dcebff 44%, #c8ddfa 100%);
 }
 .bg .blob { position: absolute; border-radius: 50%; filter: blur(2.5cqw); opacity: .55; }
-.blob.b1 { width: 26cqw; height: 26cqw; right: -6cqw; top: 8cqw; background: radial-gradient(circle, rgba(252,165,165,.85), rgba(252,165,165,0)); }
-.blob.b2 { width: 22cqw; height: 22cqw; left: -5cqw; bottom: 16cqw; background: radial-gradient(circle, rgba(254,215,170,.8), rgba(254,215,170,0)); }
+.blob.b1 { width: 26cqw; height: 26cqw; right: -6cqw; top: 8cqw; background: radial-gradient(circle, rgba(147,197,253,.85), rgba(147,197,253,0)); }
+.blob.b2 { width: 22cqw; height: 22cqw; left: -5cqw; bottom: 16cqw; background: radial-gradient(circle, rgba(186,230,253,.8), rgba(186,230,253,0)); }
+
+/* formas abstractas de fondo (anillos, arco, retícula de puntos) */
+.bg .deco { position: absolute; pointer-events: none; }
+.bg .svgdeco { inset: 0; width: 100%; height: 100%; }
+.bg .ring { border-radius: 50%; }
+.bg .ring.r1 { width: 44cqw; height: 44cqw; right: 3cqw; top: 2cqw; border: 1.1cqw solid rgba(0,112,243,.14); }
+.bg .ring.r2 { width: 28cqw; height: 28cqw; left: 1cqw; bottom: 8cqw; border: 1cqw solid rgba(125,211,252,.30); }
+.bg .arc { width: 34cqw; height: 34cqw; right: -9cqw; bottom: 18cqw; border-radius: 50%; border: 1.5cqw solid rgba(0,112,243,.13); border-top-color: transparent; border-left-color: transparent; transform: rotate(18deg); }
+.bg .dots { left: 1cqw; bottom: 1.5cqw; width: 26cqw; height: 20cqw;
+  background-image: radial-gradient(rgba(15,23,42,.13) 1.05px, transparent 1.15px);
+  background-size: 3.2cqw 3.2cqw; }
+.bg .dot { border-radius: 50%; }
+.bg .dot.d1 { width: 1.6cqw; height: 1.6cqw; left: 30cqw; top: 11cqw; background: rgba(0,112,243,.22); }
+.bg .dot.d2 { width: 1.1cqw; height: 1.1cqw; right: 26cqw; top: 55cqw; background: rgba(125,211,252,.55); }
+.bg .dot.d3 { width: 2cqw; height: 2cqw; left: 7cqw; top: 33cqw; background: rgba(15,23,42,.10); }
 .grid { display: none; }
 
 #scene { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -133,45 +156,56 @@ body {
 
 /* barra superior: logo + nombre (estilo Meta) */
 .topbar {
-  position: absolute; z-index: 3; top: 5cqw; left: 6cqw; right: 6cqw;
+  position: absolute; z-index: 3; top: var(--safe-top); left: var(--safe-x); right: var(--safe-x);
   display: flex; align-items: center; gap: 2cqw;
 }
 .topbar .mark { width: 8.4cqw; height: 8.4cqw; border-radius: 2.2cqw; object-fit: cover; box-shadow: 0 .5cqw 1.4cqw rgba(15,23,42,.18); }
 .topbar .mark.fallback { display: grid; place-items: center; background: var(--red); color: #fff; font-weight: 800; font-size: 4cqw; }
-.topbar .who { line-height: 1.05; }
+.topbar .who { line-height: 1.05; max-width: 37cqw; }
 .topbar .who b { font-size: 4cqw; font-weight: 800; letter-spacing: -.02em; }
-.topbar .who small { display: flex; align-items: center; gap: .8cqw; font-size: 2.05cqw; font-weight: 600; color: var(--muted); margin-top: .5cqw; }
-.topbar .who small i { color: var(--red); font-style: normal; font-size: 1.7cqw; }
+/* La línea de acreditación envuelve: en feed y portrait el equipo ocupa la
+   mitad derecha del encuadre desde arriba, y una sola línea larga se montaría
+   sobre él. Va en flujo normal (no flex) para que el sello y la bandera sigan
+   al texto y no salten a una línea propia. */
+.topbar .who small { display: block; font-size: 2.05cqw; font-weight: 600; color: var(--muted); margin-top: .5cqw; line-height: 1.45; }
+.topbar .who small i { color: var(--red); font-style: normal; font-size: 1.7cqw; vertical-align: -.05em; }
+/* sello SIAT y bandera: en su propia línea (los distintivos miden lo mismo que
+   dos líneas de texto y si van en línea se montan sobre el equipo de arriba a
+   la derecha) y algo más altos que el texto para que se lean como distintivos */
+.topbar .who small .sellos { display: block; margin-top: .6cqw; }
+.topbar .who small img { height: 3.0cqw; width: auto; vertical-align: middle; margin-right: .7cqw; }
+.topbar .who small img.flag { border-radius: .4cqw; box-shadow: 0 0 0 1px rgba(15,23,42,.12), 0 .2cqw .6cqw rgba(15,23,42,.14); }
 
 /* titular (columna izquierda) */
 .headline {
-  position: absolute; z-index: 3; left: 6cqw; top: 47%; transform: translateY(-50%);
-  width: 47cqw; text-align: left;
+  position: absolute; z-index: 3; left: var(--safe-x); top: 47%; transform: translateY(-50%);
+  width: 43cqw; text-align: left;
 }
 .headline h1 {
-  font-size: 5.9cqw; line-height: 1.04; font-weight: 800; letter-spacing: -.06cqw; color: var(--ink);
+  font-size: 5.3cqw; line-height: 1.04; font-weight: 800; letter-spacing: -.06cqw; color: var(--ink);
+  text-wrap: balance;   /* reparto equilibrado de líneas (tipografía profesional) */
 }
 .headline h1 em {
   color: var(--red); font-style: normal;
-  background-image: linear-gradient(transparent 64%, rgba(220,38,38,.16) 64%);
+  background-image: linear-gradient(transparent 64%, rgba(0,112,243,.16) 64%);
   padding: 0 .05em;
 }
-.headline p { margin-top: 1.6cqw; font-size: 2.2cqw; line-height: 1.4; font-weight: 600; color: var(--muted); max-width: 40cqw; }
+.headline p { margin-top: 1.6cqw; font-size: 2.05cqw; line-height: 1.4; font-weight: 700; color: var(--ink); max-width: 36cqw; text-wrap: pretty; }
 
-/* funciones (fila inferior izquierda, con separadores verticales) */
+/* funciones (fila inferior izquierda) — texto nítido, sin cajas */
 .pills {
-  position: absolute; z-index: 3; left: 6cqw; bottom: 6cqw;
-  display: flex; align-items: flex-start; gap: 1.8cqw; max-width: 44cqw;
+  position: absolute; z-index: 3; left: var(--safe-x); bottom: var(--safe-b);
+  display: flex; align-items: flex-start; gap: 1.8cqw; max-width: 46cqw;
 }
 .pill { display: flex; align-items: flex-start; gap: 1cqw; min-width: 0; }
 .pill + .pill { border-left: .22cqw solid rgba(15,23,42,.16); padding-left: 1.8cqw; }
 .pill i { flex-shrink: 0; width: 2.5cqw; text-align: center; font-size: 2.3cqw; line-height: 1.15; color: var(--red); }
-.pill b { display: block; font-size: 1.9cqw; font-weight: 800; letter-spacing: -.03cqw; line-height: 1.1; color: var(--ink); }
-.pill span { display: block; font-size: 1.4cqw; font-weight: 500; color: var(--muted); line-height: 1.26; margin-top: .25cqw; }
+.pill b { display: block; font-size: 1.95cqw; font-weight: 800; letter-spacing: -.03cqw; line-height: 1.1; color: var(--ink); }
+.pill span { display: block; font-size: 1.6cqw; font-weight: 600; color: #334155; line-height: 1.26; margin-top: .25cqw; }
 
 /* CTA (tiendas, fila derecha) */
 .cta {
-  position: absolute; z-index: 3; right: 6cqw; bottom: 6.5cqw;
+  position: absolute; z-index: 3; right: var(--safe-x); bottom: var(--safe-b);
   display: flex; flex-direction: column; align-items: flex-end; gap: 1.5cqw;
 }
 .cta .stores { display: flex; flex-direction: row; gap: 0.6cqw; }
@@ -191,11 +225,11 @@ body {
 .safezone { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .2s; }
 .card.show-safe .safezone { opacity: 1; }
 .safezone .r { position: absolute; top: 0; right: 0; bottom: 0; width: 13%;
-  background: repeating-linear-gradient(45deg, rgba(220,38,38,.16) 0 8px, transparent 8px 16px);
-  border-left: 2px dashed rgba(220,38,38,.7); }
+  background: repeating-linear-gradient(45deg, rgba(0,112,243,.16) 0 8px, transparent 8px 16px);
+  border-left: 2px dashed rgba(0,112,243,.7); }
 .safezone .b { position: absolute; left: 0; right: 0; bottom: 0; height: 14%;
-  background: repeating-linear-gradient(45deg, rgba(220,38,38,.12) 0 8px, transparent 8px 16px);
-  border-top: 2px dashed rgba(220,38,38,.7); }
+  background: repeating-linear-gradient(45deg, rgba(0,112,243,.12) 0 8px, transparent 8px 16px);
+  border-top: 2px dashed rgba(0,112,243,.7); }
 
 /* avisos */
 .loading { position: absolute; z-index: 5; left: 50%; top: 50%; transform: translate(-50%,-50%);
@@ -214,17 +248,57 @@ body {
     #eef2f7 0%, #eef2f7 20%, rgba(238,242,247,.95) 40%,
     rgba(238,242,247,.68) 62%, rgba(238,242,247,0) 100%);
 }
+
+/* modo grabación (Electron): oculta la UI y llena la ventana con la card */
+body.rec { padding: 0; gap: 0; background: #ffffff; overflow: hidden; align-items: stretch; }
+body.rec .tools { display: none !important; }
+body.rec .safezone { display: none !important; }
+body.rec .card { width: 100vw; height: 100vh; border-radius: 0; box-shadow: none; }
+
+/* tomas limpias (sin texto/UI) del director de vídeo */
+.card .topbar, .card .headline h1, .card .headline p, .card .pills, .card .cta {
+  transition: opacity .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1);
+}
+.card.clean .topbar, .card.clean .headline, .card.clean .pills, .card.clean .cta { opacity: 0; }
+/* entradas/salidas del texto: al cambiar de escena (clase .beat) el texto se
+   retira y, cuando ya se ha ido, entra el siguiente deslizándose en cascada.
+   La salida (.24s) es algo más corta que la espera del director (260 ms) para
+   que nunca coincidan en cuadro el texto viejo y el equipo nuevo. */
+.card.beat .topbar, .card.beat .headline h1, .card.beat .headline p, .card.beat .pills, .card.beat .cta {
+  transition: opacity .24s ease-in, transform .24s ease-in; transition-delay: 0s;
+}
+.card.beat .topbar { opacity: 0; transform: translateY(-2cqw); }
+.card.beat .headline h1 { opacity: 0; transform: translateY(2.4cqw) scale(.98); }
+.card.beat .headline p { opacity: 0; transform: translateY(2.4cqw) scale(.98); }
+.card.beat .pills { opacity: 0; transform: translateY(2cqw); }
+.card.beat .cta { opacity: 0; transform: translateY(2cqw); }
+/* cascada al ENTRAR (texto, sin .beat) */
+.card:not(.beat) .topbar { transition-delay: .06s; }
+.card:not(.beat) .headline h1 { transition-delay: .14s; }
+.card:not(.beat) .headline p { transition-delay: .22s; }
+.card:not(.beat) .pills { transition-delay: .18s; }
+.card:not(.beat) .cta { transition-delay: .28s; }
+
+/* transición de corte: fundido a negro entre escenas del vídeo */
+.fade-black { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 30; transition: opacity .26s ease; }
+
+/* capas auxiliares para grabar el vídeo: fondo sin texto / texto con alfa */
+.card.rec-plain::after { display: none !important; }
+.card.rec-nobg { background: transparent !important; }
+.card.rec-nobg .bg { display: none !important; }
 .card.fmt-reel .topbar { top: 4cqw; left: 7cqw; right: 16cqw; }
-.card.fmt-reel .headline { left: 7cqw; top: 15cqw; transform: none; width: 74cqw; }
+/* la acreditación son dos líneas de texto + la línea de distintivos: en reel el
+   titular tiene que arrancar más abajo para no pisarlos */
+.card.fmt-reel .headline { left: 7cqw; top: 22cqw; transform: none; width: 74cqw; }
 .card.fmt-reel .headline h1 { font-size: 8.4cqw; }
 .card.fmt-reel .headline p { font-size: 2.8cqw; max-width: none; }
 .card.fmt-reel .pills { display: none; }
 .card.fmt-reel .cta { left: 7cqw; right: 16cqw; bottom: 28cqw; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; }
 .card.fmt-reel .cta .stores { justify-content: center; }
 
-.card.fmt-portrait .headline { top: 47%; width: 50cqw; }
-.card.fmt-portrait .headline h1 { font-size: 6.7cqw; }
-.card.fmt-portrait .pills { max-width: 44cqw; }
+.card.fmt-portrait .headline { top: 47%; width: 46cqw; }
+.card.fmt-portrait .headline h1 { font-size: 6.0cqw; }
+.card.fmt-portrait .pills { max-width: 54cqw; }
 
 /* panel flotante para editar el modelo seleccionado (siempre visible, a la derecha) */
 .model-panel {

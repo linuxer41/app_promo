@@ -6,12 +6,12 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Resto — Anuncio v2</title>
-<link rel="stylesheet" href="css/v2.css?v=29" />
+<title>FactuGest — Anuncio v2</title>
+  <link rel="stylesheet" href="css/v2.css?v=40" />
 </head>
 <body>
   <aside class="tools">
-    <div class="brand">Resto <span>v2</span></div>
+    <div class="brand">FactuGest <span>v2</span></div>
     <div class="tool-group">
       <span>Formato</span>
       <button data-fmt="feed" class="active">Feed 1:1</button>
@@ -22,14 +22,14 @@
 
     <div class="tool-group">
       <span>Texto principal</span>
-      <button data-headline="0" class="active" title="Tu restaurante merece una forma más fácil de trabajar.">Más fácil de trabajar</button>
-      <button data-headline="1" title="Todo tu restaurante, en una sola app.">Todo en una sola app</button>
-      <button data-headline="2" title="Gestiona mesas, cocina y caja desde una app.">Mesas, cocina y caja</button>
-      <button data-headline="3" title="Menos papel, más sabor en tu restaurante.">Menos papel, más sabor</button>
-      <button data-headline="4" title="Tu restaurante, conectado en tiempo real.">Conectado en tiempo real</button>
-      <button data-headline="5" title="Desde el pedido hasta la caja: todo en una app.">Del pedido a la caja</button>
-      <button data-headline="6" title="Cobra rápido, cuadra el turno sin errores.">Cobra rápido, sin errores</button>
-      <button data-headline="7" title="Meseros, cocina y caja en la misma aplicación.">Meseros, cocina y caja</button>
+      <button data-headline="0" class="active" title="Factura fácil, desde donde estés.">Factura fácil, desde donde estés</button>
+      <button data-headline="1" title="Sin imprimir papel: la factura llega sola a tu cliente.">Sin imprimir papel</button>
+      <button data-headline="2" title="Factura en la calle, cobra en tu cuenta.">Factura en la calle</button>
+      <button data-headline="3" title="¿Ya tienes tu sistema? Que FactuGest facture por ti.">Conecta tu propio sistema</button>
+      <button data-headline="4" title="Cada cambio del SIAT ya viene aplicado en tu app.">El SIAT ya está aplicado</button>
+      <button data-headline="5" title="Tu cliente elige: rollo, carta, media carta o ticket.">Tu cliente elige el formato</button>
+      <button data-headline="6" title="Sin instalar programas ni actualizar tu PC.">Sin instalar nada</button>
+      <button data-headline="7" title="Tú vende, del resto nos ocupamos.">Tú vende, del resto nos ocupamos</button>
     </div>
     <hr />
 
@@ -57,7 +57,7 @@
     <hr />
 
     <div class="tool-group">
-      <label class="upload" style="border-style:solid"><input type="checkbox" id="safe" style="width:15px;height:15px;accent-color:#DC2626" /> Margen seguro</label>
+      <label class="upload" style="border-style:solid"><input type="checkbox" id="safe" style="width:15px;height:15px;accent-color:#0070F3" /> Margen seguro</label>
     </div>
     <div class="tool-group">
       <span>Exportar</span>
@@ -67,6 +67,8 @@
       </div>
       <button class="snap" id="snap"><i class="fa fa-camera"></i> Descargar 1080&times;1080</button>
       <button id="snap-all"><i class="fa fa-camera"></i> Exportar todo (3)</button>
+      <button id="snap-zip"><i class="fa fa-camera"></i> Exportar 8 textos &times; 3 (ZIP)</button>
+      <button id="snap-video"><i class="fa fa-camera"></i> Descargar v&iacute;deo (30 s)</button>
       <div class="row">
         <button id="save-json"><i class="fa fa-download"></i> Guardar JSON</button>
         <button id="load-json"><i class="fa fa-upload"></i> Cargar JSON</button>
@@ -91,28 +93,57 @@
   </aside>
 
   <div class="card fmt-feed" id="card">
-    <div class="bg"><span class="blob b1"></span><span class="blob b2"></span></div>
+    <div class="bg">
+      <span class="deco ring r1"></span>
+      <span class="deco ring r2"></span>
+      <span class="deco arc"></span>
+      <span class="deco dots"></span>
+      <span class="deco dot d1"></span>
+      <span class="deco dot d2"></span>
+      <span class="deco dot d3"></span>
+      <svg class="deco svgdeco" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="none" stroke="#0070F3" stroke-linejoin="round">
+          <polygon points="94,16 90,22.9 82,22.9 78,16 82,9.1 90,9.1" stroke-width="0.55" opacity="0.20"/>
+          <polygon points="20,26 17,31.2 11,31.2 8,26 11,20.8 17,20.8" stroke-width="0.55" opacity="0.13"/>
+          <polygon points="95,62 91.5,68.1 84.5,68.1 81,62 84.5,55.9 91.5,55.9" stroke-width="0.55" opacity="0.12"/>
+          <polygon points="81,84 78.5,88.3 73.5,88.3 71,84 73.5,79.7 78.5,79.7" stroke-width="0.55" opacity="0.10"/>
+        </g>
+        <g fill="none" stroke="#7DD3FC" stroke-linecap="round">
+          <path d="M0,73 C18,65 26,85 46,77" stroke-width="0.6" opacity="0.30"/>
+          <path d="M55,97 C67,89 79,93 100,83" stroke-width="0.6" opacity="0.24"/>
+        </g>
+        <g fill="none" stroke="#0070F3" stroke-linecap="round" opacity="0.16">
+          <line x1="60" y1="34" x2="70" y2="48" stroke-width="0.5"/>
+          <line x1="67" y1="32" x2="77" y2="46" stroke-width="0.5"/>
+          <line x1="74" y1="30" x2="84" y2="44" stroke-width="0.5"/>
+        </g>
+      </svg>
+      <span class="blob b1"></span><span class="blob b2"></span>
+    </div>
 
     <canvas id="scene"></canvas>
 
     <div class="topbar">
-      <img class="mark" src="logo-app.png" alt="Resto"
-           onerror="this.outerHTML='&lt;div class=&quot;mark fallback&quot;&gt;R&lt;/div&gt;'" />
+      <img class="mark" src="logo-app.png" alt="FactuGest"
+           onerror="this.outerHTML='&lt;div class=&quot;mark fallback&quot;&gt;F&lt;/div&gt;'" />
       <div class="who">
-        <b>Resto</b>
-        <small><i class="fa fa-circle-check"></i> Sistema para restaurantes · 4.9 ★</small>
+        <b>FactuGest</b>
+        <small><i class="fa fa-circle-check"></i> Plataforma autorizada por Impuestos Nacionales
+          <span class="sellos"><img class="seal" src="badges/siat.png" alt="SIAT en línea" />
+          <img class="flag" src="badges/bandera-bolivia.png" alt="Bolivia" /></span>
+        </small>
       </div>
     </div>
 
     <div class="headline">
-      <h1><span id="h1-a">Todo tu restaurante, en</span> <em id="h1-em">una sola app</em><span id="h1-c">.</span></h1>
-      <p>Meseros, cocina y caja conectados en tiempo real. Sin papel, sin errores.</p>
+      <h1><span id="h1-a">Factura fácil,</span> <em id="h1-em">desde donde estés</em><span id="h1-c">.</span></h1>
+      <p>Emite desde el celular y mándasela automática por WhatsApp.</p>
     </div>
 
     <div class="pills">
-      <div class="pill"><i class="fa fa-bell-concierge"></i><div><b>Meseros</b><span>Toma el pedido en la mesa: llega solo a cocina</span></div></div>
-      <div class="pill"><i class="fa fa-kitchen-set"></i><div><b>Cocina</b><span>Las comandas salen en pantalla, sin gritos ni papelitos</span></div></div>
-      <div class="pill"><i class="fa fa-cash-register"></i><div><b>Caja</b><span>Cobra rápido y cuadra el turno al cerrar</span></div></div>
+<div class="pill"><i class="fa fa-bolt"></i><div><b>Factura y envía</b><span>Emite en 20 segundos y mándasela automática por WhatsApp</span></div></div>
+<div class="pill"><i class="fa fa-plug"></i><div><b>Conecta tu sistema</b><span>API lista: tu POS o software factura sin cambios</span></div></div>
+<div class="pill"><i class="fa fa-shield-halved"></i><div><b>Siempre al día</b><span>Aplicamos cada nuevo requisito del SIAT por ti</span></div></div>
     </div>
 
     <div class="cta">
@@ -125,6 +156,8 @@
 
     <div class="safezone"><div class="r"></div><div class="b"></div></div>
 
+    <div class="fade-black" id="fade-black"></div>
+
     <div class="loading" id="loading">Cargando 3D…</div>
     <div class="err" id="err"></div>
   </div>
@@ -132,6 +165,7 @@
   <script src="libs/three.min.js"></script>
   <script src="libs/GLTFLoader.js"></script>
   <script src="libs/html-to-image.js"></script>
-  <script src="js/v2.js?v=29"></script>
+  <script src="js/v2.js?v=47"></script>
 </body>
 </html>
+

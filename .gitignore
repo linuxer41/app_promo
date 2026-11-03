@@ -19,6 +19,20 @@ tmp/
 # Dependencias (si algún día se usa Node)
 node_modules/
 
-# Capturas exportadas por la app
+# Configuración local de editores/agentes (contiene tokens)
+.opencode/
+opencode.json
+
+# Capturas y vídeos exportados por las promos
 resto-*.png
 resto-*.jpg
+facturgest-*.png
+facturgest-*.jpg
+resto/video-out/
+facturgest/video-out/
+
+# Fuentes de diseño pesados: GitHub corta la subida por HTTPS/SSH alrededor de
+# los 50 MB, así que estos archivos se quedan solo en disco.
+*.psd
+*.ai
+*.sketch

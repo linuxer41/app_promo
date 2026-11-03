@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>FactuGest · Ventas y clientes</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1599px; height: 999px; overflow: hidden; }
+body { font: 400 15px/1.4 system-ui, 'Segoe UI', Roboto, sans-serif; color: #334155; background: #F3F4F6; display: flex; }
+.rail { width: 84px; background: #0F172A; display: flex; flex-direction: column; align-items: center; padding: 18px 0; gap: 8px; flex: none; }
+.rail .lg { width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(140deg,#0070F3,#1D9BD1); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 21px; margin-bottom: 14px; }
+.rail a { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; color: #64748B; }
+.rail a.on { background: #0070F3; color: #fff; box-shadow: 0 8px 18px rgba(0,112,243,.4); }
+.rail .sp { margin-top: auto; }
+
+.main { flex: 1; padding: 20px 24px 18px; min-width: 0; display: flex; flex-direction: column; }
+.head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.head h1 { font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -.4px; }
+.head p { font-size: 13.5px; color: #64748B; margin-top: 2px; }
+.seg { margin-left: auto; display: flex; gap: 4px; background: #E5E7EB; border-radius: 12px; padding: 4px; font-size: 13.5px; font-weight: 700; }
+.seg div { padding: 8px 16px; border-radius: 9px; color: #64748B; }
+.seg .on { background: #fff; color: #0070F3; box-shadow: 0 2px 6px rgba(15,23,42,.12); }
+.btn { height: 38px; padding: 0 15px; border-radius: 11px; background: #0070F3; color: #fff; border: 1px solid #0070F3; display: inline-flex; align-items: center; gap: 9px; font-weight: 800; font-size: 13.5px; box-shadow: 0 8px 18px rgba(0,112,243,.26); flex: none; }
+
+.kpis { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.kpi { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.kpi .l { font-size: 12.5px; color: #64748B; font-weight: 600; }
+.kpi .v { font-size: 25px; font-weight: 800; color: #0F172A; letter-spacing: -.7px; margin-top: 4px; }
+.kpi .d { font-size: 12px; color: #94A3B8; margin-top: 4px; }
+.up { color: #16A34A; font-weight: 800; }
+
+.cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; margin-top: 12px; flex: 1; min-height: 0; }
+.card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 15px 17px; box-shadow: 0 1px 2px rgba(0,0,0,.05); display: flex; flex-direction: column; min-width: 0; }
+.ch { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.ch h2 { font-size: 15.5px; font-weight: 800; color: #0F172A; }
+.ch .m { margin-left: auto; font-size: 12.5px; color: #64748B; }
+.legend { display: flex; gap: 12px; font-size: 12px; color: #64748B; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 3px; border-radius: 2px; background: #0070F3; }
+.legend .b i { background: #CBD5E1; }
+.plot { position: relative; flex: 1; min-height: 0; }
+.plot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.pr { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-bottom: 1px dashed #EEF1F5; }
+.pr:last-child { border-bottom: 0; }
+.pr .rk { width: 26px; height: 26px; border-radius: 8px; background: #E8F2FE; color: #0070F3; display: grid; place-items: center; font-size: 12.5px; font-weight: 800; flex: none; }
+.pr .nm { flex: 1; font-size: 13.5px; font-weight: 700; color: #0F172A; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr .nm small { display: block; font-weight: 500; color: #94A3B8; font-size: 11.5px; }
+.pr .am { text-align: right; font-size: 14px; font-weight: 800; color: #0F172A; flex: none; }
+.pr .am small { display: block; font-weight: 600; color: #16A34A; font-size: 11.5px; }
+.grid2 { display: grid; grid-template-rows: 1fr 1fr; gap: 12px; min-height: 0; }
+.foot { margin-top: 12px; display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 11px 15px; font-size: 13px; color: #64748B; }
+.foot b { color: #0F172A; }
+.foot .ok { display: inline-flex; align-items: center; gap: 8px; color: #16A34A; font-weight: 800; margin-left: auto; }
+</style></head>
+<body>
+  <aside class="rail">
+    <div class="lg">F</div>
+    <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V8l6-5 6 5v13M15 12h6v9"/></svg></a>
+    <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h5"/></svg></a>
+    <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 21a6.5 6.5 0 0 1 13 0M17 8h5M19.5 5.5v5"/></svg></a>
+    <a class="on" href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></a>
+    <a class="sp" href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2"/></svg></a>
+  </aside>
+
+  <main class="main">
+    <div class="head">
+      <div><h1>Ventas y clientes</h1><p>Emphasis SRL · comparativa octubre 2026 vs. septiembre</p></div>
+      <div class="seg"><div>Semana</div><div class="on">Mes</div><div>Año</div></div>
+      <div class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg> Compartir</div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="l">Ventas del mes</div><div class="v">Bs 68.420,50</div><div class="d"><span class="up">+23%</span> · Bs 12.830 más que septiembre</div></div>
+      <div class="kpi"><div class="l">Cobrado</div><div class="v">Bs 54.180,00</div><div class="d"><span class="up">79%</span> · promedio 2,4 días en cobrar</div></div>
+      <div class="kpi"><div class="l">Ticket promedio</div><div class="v">Bs 1.487,00</div><div class="d"><span class="up">+8%</span> · 46 facturas emitidas</div></div>
+      <div class="kpi"><div class="l">Clientes que volvieron</div><div class="v">19 de 31</div><div class="d"><span class="up">8 nuevos</span> este mes</div></div>
+    </div>
+
+    <div class="cols">
+      <div class="card">
+        <div class="ch"><h2>Cómo subieron tus ventas</h2>
+          <div class="legend"><span><i></i> Octubre</span><span class="b"><i></i> Septiembre</span></div>
+          <div class="m">Acumulado</div>
+        </div>
+        <div class="plot">
+          <svg viewBox="0 0 600 260" preserveAspectRatio="none">
+            <g stroke="#EEF1F5" stroke-width="1">
+              <line x1="0" y1="40" x2="600" y2="40"/><line x1="0" y1="95" x2="600" y2="95"/><line x1="0" y1="150" x2="600" y2="150"/><line x1="0" y1="205" x2="600" y2="205"/><line x1="0" y1="248" x2="600" y2="248"/>
+            </g>
+            <defs>
+              <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0070F3" stop-opacity=".26"/><stop offset="100%" stop-color="#0070F3" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,248 L0,214 L60,198 L120,182 L180,160 L240,146 L300,120 L360,104 L420,78 L480,62 L540,38 L600,22 L600,248 Z" fill="url(#fill)"/>
+            <path d="M0,214 L60,198 L120,182 L180,160 L240,146 L300,120 L360,104 L420,78 L480,62 L540,38 L600,22" fill="none" stroke="#0070F3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M0,228 L60,220 L120,208 L180,196 L240,186 L300,168 L360,156 L420,140 L480,128 L540,112 L600,100" fill="none" stroke="#CBD5E1" stroke-width="3" stroke-dasharray="7 6"/>
+            <circle cx="600" cy="22" r="7" fill="#fff" stroke="#0070F3" stroke-width="4"/>
+            <g transform="translate(452,10)">
+              <rect width="132" height="30" rx="9" fill="#0F172A"/>
+              <text x="66" y="20" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">Bs 68.420</text>
+            </g>
+          </svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#94A3B8;padding-top:6px">
+          <span>1 oct</span><span>8</span><span>15</span><span>22</span><span>30</span>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="ch"><h2>Productos que más venden</h2><div class="m">Bs 38.530</div></div>
+          <div class="pr"><span class="rk">1</span><span class="nm">Paracetamol 500 mg<small>34 cajas</small></span><span class="am">Bs 12.480<small>+28%</small></span></div>
+          <div class="pr"><span class="rk">2</span><span class="nm">Alcohol gel 500 ml<small>61 unidades</small></span><span class="am">Bs 9.310<small>+19%</small></span></div>
+          <div class="pr"><span class="rk">3</span><span class="nm">Suero oral<small>45 sobres</small></span><span class="am">Bs 7.640<small>+11%</small></span></div>
+          <div class="pr"><span class="rk">4</span><span class="nm">Barbijo quirúrgico<small>12 cajas</small></span><span class="am">Bs 5.120<small>+6%</small></span></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Tus mejores clientes</h2><div class="m">61% de las ventas</div></div>
+          <div class="pr"><span class="rk">1</span><span class="nm">Farmacia San Martín<small>12 compras · NIT 403925</small></span><span class="am">Bs 9.840<small>al día</small></span></div>
+          <div class="pr"><span class="rk">2</span><span class="nm">Comercial Andina Ltda<small>9 compras · La Paz</small></span><span class="am">Bs 8.220<small>al día</small></span></div>
+          <div class="pr"><span class="rk">3</span><span class="nm">Hotel Illimani<small>7 compras · El Alto</small></span><span class="am">Bs 6.910<small>2 pendientes</small></span></div>
+          <div class="pr"><span class="rk">4</span><span class="nm">Panificadora Doña Rosa<small>6 compras · nuevo</small></span><span class="am">Bs 3.410<small>al día</small></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot"><b>Ahorrado este mes:</b> 6 horas de papeleo y 3 visitas al contador
+      <span style="margin-left:18px"><b>41 facturas</b> enviadas a tus clientes por WhatsApp o correo</span>
+      <span class="ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Siempre al día con el SIAT · normativa v1078</span>
+    </div>
+  </main>
+</body></html>

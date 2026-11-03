@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Resto — v2 (versión única: junta v3 + v4)
+   FactuGest — v2 (versión única: junta v3 + v4)
    Escena 3D con modelos GLB reales (iPhone / iPad / MacBook).
    Incluye selector de textos de CTA y export nativo para los 3 tamaños.
    Se aplica el screenshot de la app sobre el material "Screen" de cada modelo.
@@ -84,51 +84,55 @@
   // al usarla no se aplica la separación automática.
   var LAYOUT = {
     feed: {
-      stage: { scale: 0.80, y: 0.14 },
-      hero:   { p: [ 1.30, 0.06, 0.95], ry: -0.05, scale: 3.72 },
+      stage: { scale: 0.78, y: 0.12 },
+      hero:   { p: [ 1.46, 0.04, 0.95], ry: -0.05, scale: 3.38 },
       behind: [
-        { p: [ 0.74, 1.08, -0.55], ry:  0.34, scale: 1.52 },
-        { p: [ 1.30, -0.92, -0.55], ry: -0.26, scale: 1.52 }
+        { p: [ 1.02, 1.02, -0.55], ry:  0.34, scale: 1.40 },
+        { p: [ 1.42, -0.88, -0.55], ry: -0.26, scale: 1.40 }
       ],
       phones: {
-        hero:   { p: [ 1.70, 0.70, 0.70], ry: -0.16, scale: 2.35 },
+        hero:   { p: [ 1.86, 0.66, 0.70], ry: -0.16, scale: 2.14 },
         behind: [
-          { p: [ 1.08, 0.05, 0.20], ry:  0.02, scale: 2.35 },
-          { p: [ 0.46, -0.60, -0.30], ry:  0.20, scale: 2.35 }
+          { p: [ 1.26, 0.02, 0.20], ry:  0.02, scale: 2.14 },
+          { p: [ 0.66, -0.62, -0.30], ry:  0.20, scale: 2.14 }
         ]
       }
     },
     portrait: {
-      stage: { scale: 0.86, y: 0.20 },
-      hero:   { p: [ 1.12, 0.00, 0.95], ry: -0.05, scale: 3.92 },
+      stage: { scale: 0.82, y: 0.06 },
+      hero:   { p: [ 1.34, 0.00, 0.95], ry: -0.05, scale: 3.34 },
       behind: [
-        { p: [ 0.78, 1.32, -0.55], ry:  0.34, scale: 1.62 },
-        { p: [ 1.14, -1.04, -0.55], ry: -0.24, scale: 1.60 }
+        { p: [ 0.98, 1.06, -0.55], ry:  0.34, scale: 1.40 },
+        { p: [ 1.42, -0.98, -0.55], ry: -0.24, scale: 1.40 }
       ],
       phones: {
-        hero:   { p: [ 1.68, 0.85, 0.70], ry: -0.16, scale: 2.50 },
+        hero:   { p: [ 1.84, 0.82, 0.70], ry: -0.16, scale: 2.28 },
         behind: [
-          { p: [ 1.06, 0.10, 0.20], ry:  0.02, scale: 2.50 },
-          { p: [ 0.44, -0.65, -0.30], ry:  0.20, scale: 2.50 }
+          { p: [ 1.24, 0.10, 0.20], ry:  0.02, scale: 2.28 },
+          { p: [ 0.64, -0.62, -0.30], ry:  0.20, scale: 2.28 }
         ]
       }
     },
     reel: {
-      stage: { scale: 0.70, y: -0.46 },
-      hero:   { p: [ 0.54, 0.06, 0.95], ry: -0.05, scale: 3.10 },
+      stage: { scale: 0.68, y: -0.44 },
+      hero:   { p: [ 0.58, 0.04, 0.95], ry: -0.05, scale: 2.92 },
       behind: [
-        { p: [-1.04, 0.90, -0.60], ry:  0.32, scale: 1.70 },
-        { p: [ 0.90, -0.96, -0.60], ry: -0.26, scale: 1.60 }
+        { p: [-1.02, 0.86, -0.60], ry:  0.32, scale: 1.56 },
+        { p: [ 0.94, -0.94, -0.60], ry: -0.26, scale: 1.48 }
       ],
       phones: {
-        hero:   { p: [ 0.42, 1.45, 0.70], ry: -0.12, scale: 2.60 },
+        hero:   { p: [ 0.46, 1.42, 0.70], ry: -0.12, scale: 2.40 },
         behind: [
-          { p: [ 0.10, 0.55, 0.20], ry:  0.04, scale: 2.60 },
-          { p: [-0.22, -0.35, -0.30], ry:  0.16, scale: 2.60 }
+          { p: [ 0.12, 0.52, 0.20], ry:  0.04, scale: 2.40 },
+          { p: [-0.20, -0.38, -0.30], ry:  0.16, scale: 2.40 }
         ]
       }
     }
   };
+  // Aspecto de cada formato y media altura visible del plano z=0 (para el
+  // recorte automático). fov de cámara por defecto = 32°, distancia = 10.
+  var ASPECT = { feed: 1, portrait: 4 / 5, reel: 9 / 16 };
+  var CAM_HALF0 = Math.tan(32 * Math.PI / 360) * 10;   // ~2.867
   // correcciones de orientación y material de pantalla por equipo.
   // El material de la pantalla cambia según el modelo:
   //   macbook.glb                  -> "Screen"
@@ -145,14 +149,21 @@
   var sel = null;      // equipo objetivo de las herramientas (clic), no cambia el layout
   var selftest = false;
   var texFlipY = false;
+  var videoVRes = 0;   // tope opcional del lado mayor del vídeo (?vres=)
+  var autorec = false; // grabación automática de la ventana (Electron)
+  var videoDur = 0;    // duración del vídeo (?vdur=)
   try {
     var qs = new URLSearchParams(location.search);
     if (qs.get('fmt')) fmt = qs.get('fmt');
     if (qs.get('view')) view = qs.get('view');
     if (qs.get('focus')) view = qs.get('focus');
     if (qs.get('res')) RENDER_LONG = Math.max(256, parseInt(qs.get('res'), 10) || RENDER_LONG);
+    if (qs.get('vres')) videoVRes = Math.max(160, parseInt(qs.get('vres'), 10) || 0);
     if (qs.get('selftest')) selftest = true;
     if (qs.get('flipy') === '1') texFlipY = true;
+    if (qs.get('autorec')) autorec = true;
+    if (qs.get('vdur')) videoDur = Math.max(2, Math.min(60, parseInt(qs.get('vdur'), 10) || 0));
+    if (qs.get('wintitle')) { try { document.title = qs.get('wintitle'); } catch (e) {} }
   } catch (e) {}
 
   /* ------------------------------------------------------------ modelos */
@@ -163,17 +174,17 @@
   // y, por equipo, offset + ajustes. Al cambiar de formato se conserva todo.
   var fmtState = {};      // fmt -> { order: [], view: 'all', sel: null, init: false }
   var HEADLINES = [
-    { a: 'Tu restaurante merece una forma', em: 'más fácil', c: 'de trabajar.' },
-    { a: 'Todo tu restaurante, en',       em: 'una sola app', c: '.' },
-    { a: 'Gestiona mesas, cocina y caja', em: 'desde una app', c: '.' },
-    { a: 'Menos papel,',                  em: 'más sabor',     c: ' en tu restaurante.' },
-    { a: 'Tu restaurante,',               em: 'conectado en tiempo real', c: '.' },
-    { a: 'Desde el pedido hasta la caja:', em: 'todo en una app', c: '.' },
-    { a: '',                              em: 'Cobra rápido, cuadra el turno', c: ' sin errores.' },
-    { a: 'Meseros, cocina y caja',        em: 'en la misma aplicación', c: '.' }
+    { a: 'Factura fácil,', em: 'desde donde estés', c: '.' },
+    { a: 'Sin imprimir papel:', em: 'la factura llega sola', c: ' a tu cliente.' },
+    { a: 'Factura en la calle,', em: 'cobra en tu cuenta', c: '.' },
+    { a: '¿Ya tienes tu sistema?', em: 'Que FactuGest facture', c: ' por ti.' },
+    { a: 'Cada cambio del SIAT', em: 'ya viene aplicado', c: ' en tu app.' },
+    { a: 'Tu cliente elige:', em: 'rollo, carta, media carta o ticket', c: '.' },
+    { a: 'Sin instalar programas', em: 'ni actualizar tu PC', c: '.' },
+    { a: 'Tú vende.', em: 'Del resto nos ocupamos', c: ' nosotros.' },
   ];
   var headlineIdx = 0;
-  function setHeadline(i) {
+  function setHeadline(i, persist) {
     if (i < 0 || i >= HEADLINES.length) return;
     headlineIdx = i;
     var h = HEADLINES[i];
@@ -186,7 +197,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-headline]'), function (b) {
       b.classList.toggle('active', b.getAttribute('data-headline') == String(i));
     });
-    saveState();
+    if (persist !== false) saveState();
   }
 
   function F(f) {
@@ -217,7 +228,7 @@
   // Guarda, para CADA formato, qué equipos tiene su escena y su posición/
   // escala/giro/selección. Al recargar se reconstruyen todos los formatos tal
   // cual los dejaste. Cada formato es totalmente independiente del resto.
-  var LS_KEY = 'resto_v2_state_v3';
+  var LS_KEY = 'facturgest_v2_state_v3';
   var pendingState = null;
   function loadState() {
     try {
@@ -269,6 +280,7 @@
     fmtState = state.order || {};
     if (state.design && DESIGNS[state.design]) design = state.design;
     if (state.headlineIdx !== undefined && state.headlineIdx !== null && !isNaN(state.headlineIdx)) headlineIdx = parseInt(state.headlineIdx, 10);
+    if (qsHead !== null) headlineIdx = qsHead;                  // ?headline= gana al estado guardado
     var types = state.types;
     var ids = Object.keys(types);
     return Promise.all(ids.map(function (id) {
@@ -540,13 +552,13 @@
   }
 
   // --- arranque: reconstruye el estado guardado o crea la escena por defecto ---
-  var qsDesign = null, qsSel = null;
+  var qsDesign = null, qsSel = null, qsHead = null;
   try {
     var qsParams = new URLSearchParams(location.search);
     qsDesign = qsParams.get('design') || qsParams.get('scene');
     qsSel = qsParams.get('sel');
     var qsHeadline = qsParams.get('headline');
-    if (qsHeadline !== null && !isNaN(qsHeadline)) headlineIdx = parseInt(qsHeadline, 10);
+    if (qsHeadline !== null && !isNaN(qsHeadline)) { qsHead = parseInt(qsHeadline, 10); headlineIdx = qsHead; }
   } catch (e) {}
 
   // ajusta typeCount para que los ids nuevos no choquen con los reconstruidos
@@ -566,6 +578,13 @@
 
   function initScene() {
     loadState();
+    // Grabación (Electron): escena limpia y determinista, sin estado guardado
+    // de sesiones anteriores (que descuadraba tamaños/posiciones).
+    if (autorec) {
+      try { localStorage.removeItem(LS_KEY); } catch (e) {}
+      pendingState = null; design = 'trio';
+      return setDesign('trio');
+    }
     if (qsDesign) design = qsDesign;                          // ?design= fuerza el diseño
     else if (pendingState && pendingState.design && DESIGNS[pendingState.design]) design = pendingState.design;
     if (pendingState && pendingState.types && Object.keys(pendingState.types).length) {
@@ -690,6 +709,22 @@
     return L;
   }
 
+  // media altura/ancho del encuadre visible en el plano z (unidades de stage)
+  function frameHalf(z) {
+    var st = LAYOUT[fmt].stage;
+    var halfH = CAM_HALF0 * (Math.max(1, 10 - (z || 0)) / 10) / st.scale;
+    return { h: halfH, w: halfH * (ASPECT[fmt] || 1) };
+  }
+  // escala que hace que la huella del equipo ocupe fillW/fillH del encuadre
+  function fitScale(d, fillW, fillH) {
+    var z = (d.slotP && d.slotP.z) || 0.9;
+    var f = frameHalf(z);
+    var h = d.half || { x: 0.5, y: 0.5 };
+    var sW = (fillW * f.w) / Math.max(1e-3, h.x);
+    var sH = (fillH * f.h) / Math.max(1e-3, h.y);
+    return Math.min(sW, sH);
+  }
+
   // slot que le toca a cada equipo: el seleccionado (o el primero por defecto)
   // va al hero y los demás a los huecos "behind".
   function slotFor(key) {
@@ -726,6 +761,23 @@
     }
   }
 
+  // encaja los slots dentro del encuadre visible para que ningún equipo se
+  // recorte por los bordes (solo afecta a las posiciones por defecto; el
+  // arrastre manual posterior puede moverlo libremente).
+  function clampSlots(list) {
+    var st = LAYOUT[fmt].stage;
+    var asp = ASPECT[fmt] || 1;
+    list.forEach(function (e) {
+      var dist = Math.max(1, 10 - e.z);
+      var halfH = CAM_HALF0 * (dist / 10) / st.scale;
+      var halfW = halfH * asp;
+      var mx = Math.max(0, halfW * 0.98 - e.hx);
+      var my = Math.max(0, halfH * 0.98 - e.hy);
+      e.x = Math.max(-mx, Math.min(mx, e.x));
+      e.y = Math.max(-my, Math.min(my, e.y));
+    });
+  }
+
   function applyLayout(instant) {
     var st = LAYOUT[fmt].stage;
     var list = [];
@@ -743,6 +795,7 @@
     });
     // el diseño "3 móviles" lleva solape elegante por diseño: no separar
     if (design !== 'phones') separate(list);
+    clampSlots(list);
     list.forEach(function (e) {
       var d = devices[e.key];
       d.slotP = { x: e.x, y: e.y, z: e.z };
@@ -1220,7 +1273,7 @@
       if (img.parentNode) card.removeChild(img);
       canvas.style.visibility = '';
       if (err) cb(err);
-      else cb(null, url, 'resto-' + targetFmt + '-' + w + 'x' + h + '.' + ext);
+      else cb(null, url, 'facturgest-' + targetFmt + '-' + w + 'x' + h + '.' + ext);
     }
     img.onload = function () {
       canvas.style.visibility = 'hidden';
@@ -1256,7 +1309,7 @@
 
     // 2) DOM en un clon oculto (no se ve afectada la card real)
     captureClone(targetFmt, w, h, data, function (err, url) {
-      cb(err, url, 'resto-' + targetFmt + '-' + w + 'x' + h + '.' + ext);
+      cb(err, url, 'facturgest-' + targetFmt + '-' + w + 'x' + h + '.' + ext);
     });
   }
 
@@ -1287,26 +1340,42 @@
     });
   }
 
+  var ALL_LABEL = '<i class="fa fa-camera"></i> Exportar todo (3)';
   function exportAll() {
     if (exporting) return;
     exporting = true;
     var list = ['feed', 'portrait', 'reel'];
     var snap = document.getElementById('snap');
     var btn = document.getElementById('snap-all');
+    var zipBtn = document.getElementById('snap-zip');
     if (snap) snap.disabled = true;
     if (btn) btn.disabled = true;
-    var i = 0;
+    if (zipBtn) zipBtn.disabled = true;
+    var entries = [], i = 0;
+    function finishUp() {
+      exporting = false;
+      if (snap) snap.disabled = false;
+      if (btn) { btn.disabled = false; btn.innerHTML = ALL_LABEL; }
+      if (zipBtn) zipBtn.disabled = false;
+    }
     function step() {
       if (i >= list.length) {
-        exporting = false;
-        if (snap) snap.disabled = false;
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa fa-camera"></i> Exportar todo (3)'; }
+        var url;
+        try { url = URL.createObjectURL(buildZip(entries)); }
+        catch (e) { finishUp(); fail('No se pudo crear el ZIP: ' + (e && e.message ? e.message : e)); return; }
+        saveUrl(url, 'facturgest-3-formatos.zip');
+        setTimeout(function () { URL.revokeObjectURL(url); }, 8000);
+        finishUp();
         return;
       }
+      var f = list[i];
       if (btn) btn.innerHTML = '<i class="fa fa-camera"></i> Exportando ' + (i + 1) + '/' + list.length + '\u2026';
-      exportOne(list[i], function () {
+      renderOne(f, function (err, res) {
+        if (err) { finishUp(); fail('No se pudo exportar: ' + (err && err.message ? err.message : err)); return; }
+        var s = EXPORT[f];
+        entries.push({ name: 'facturgest_' + f + '_' + s.w + 'x' + s.h + '.' + ext, data: dataUrlToBytes(res.url) });
         i++;
-        setTimeout(step, 900);   // pausa para que el navegador permita varias descargas
+        setTimeout(step, 60);
       });
     }
     step();
@@ -1317,7 +1386,581 @@
   var snapAll = document.getElementById('snap-all');
   if (snapAll) snapAll.addEventListener('click', exportAll);
 
-  // guardar / cargar el diseño completo en JSON (posiciones, screenshots y textos)
+  /* --------------------------------- exportar los 8 textos × 3 en un ZIP */
+  // envuelve renderAd en una promesa con { url, fmt }
+  function renderOne(targetFmt, cb) {
+    renderAd(targetFmt, function (err, url) {
+      if (err) cb(err); else cb(null, { url: url, fmt: targetFmt });
+    });
+  }
+  // data URL (base64) -> bytes
+  function dataUrlToBytes(u) {
+    var comma = u.indexOf(',');
+    var bin = atob(u.slice(comma + 1));
+    var n = bin.length, out = new Uint8Array(n);
+    for (var k = 0; k < n; k++) out[k] = bin.charCodeAt(k);
+    return out;
+  }
+  // ZIP (método "store": las imágenes ya vienen comprimidas)
+  var CRC_TABLE = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(u8) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function u16(v) { return [v & 0xFF, (v >>> 8) & 0xFF]; }
+  function u32(v) { return [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF]; }
+  function buildZip(entries, when) {
+    var chunks = [], central = [], offset = 0;
+    var d = when || new Date();
+    var dosTime = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
+    var dosDate = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+    entries.forEach(function (e) {
+      var name = new TextEncoder().encode(e.name);
+      var crc = crc32(e.data), size = e.data.length;
+      var head = new Uint8Array([].concat(
+        u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(dosTime), u16(dosDate),
+        u32(crc), u32(size), u32(size), u16(name.length), u16(0)));
+      chunks.push(head, name, e.data);
+      central.push({ name: name, crc: crc, size: size, offset: offset });
+      offset += head.length + name.length + size;
+    });
+    var cdStart = offset;
+    central.forEach(function (c) {
+      var hdr = new Uint8Array([].concat(
+        u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(dosTime), u16(dosDate),
+        u32(c.crc), u32(c.size), u32(c.size), u16(c.name.length), u16(0), u16(0),
+        u16(0), u16(0), u32(0), u32(c.offset)));
+      chunks.push(hdr, c.name);
+      offset += hdr.length + c.name.length;
+    });
+    var cdSize = offset - cdStart;
+    chunks.push(new Uint8Array([].concat(
+      u32(0x06054b50), u16(0), u16(0), u16(central.length), u16(central.length),
+      u32(cdSize), u32(cdStart), u16(0))));
+    return new Blob(chunks, { type: 'application/zip' });
+  }
+
+  var ZIP_LABEL = '<i class="fa fa-camera"></i> Exportar 8 textos \u00D7 3 (ZIP)';
+  function exportTextsZip() {
+    if (exporting) return;
+    exporting = true;
+    var btn = document.getElementById('snap-zip');
+    var snap = document.getElementById('snap');
+    var snapAllBtn = document.getElementById('snap-all');
+    if (snap) snap.disabled = true;
+    if (snapAllBtn) snapAllBtn.disabled = true;
+    if (btn) btn.disabled = true;
+    var origHeadline = headlineIdx, origFmt = fmt;
+    var fmts = ['feed', 'portrait', 'reel'];
+    var entries = [], total = HEADLINES.length * fmts.length, done = 0, i = 0, j = 0;
+    function finishUp() {
+      exporting = false;
+      if (snap) snap.disabled = false;
+      if (snapAllBtn) snapAllBtn.disabled = false;
+      if (btn) { btn.disabled = false; btn.innerHTML = ZIP_LABEL; }
+    }
+    function finish() {
+      var url;
+      try { url = URL.createObjectURL(buildZip(entries)); }
+      catch (e) { finishUp(); fail('No se pudo crear el ZIP: ' + (e && e.message ? e.message : e)); return; }
+      saveUrl(url, 'facturgest-8-textos-3-formatos.zip');
+      setTimeout(function () { URL.revokeObjectURL(url); }, 8000);
+      setHeadline(origHeadline, true);                 // restaura el estado visible
+      if (origFmt !== fmt) selectFormat(origFmt);
+      finishUp();
+    }
+    function step() {
+      if (i >= HEADLINES.length) { finish(); return; }
+      if (j >= fmts.length) { i++; j = 0; step(); return; }
+      if (btn) btn.innerHTML = '<i class="fa fa-camera"></i> Exportando texto ' + (i + 1) + '/' +
+        HEADLINES.length + ' \u00B7 ' + (j + 1) + '/' + fmts.length + '\u2026';
+      setHeadline(i, false);
+      var f = fmts[j];
+      setTimeout(function () {
+        renderOne(f, function (err, res) {
+          if (err) { finishUp(); fail('No se pudo exportar: ' + (err && err.message ? err.message : err)); return; }
+          var s = EXPORT[f];
+          entries.push({ name: 'facturgest_' + (i + 1 < 10 ? '0' : '') + (i + 1) + '_' + f + '_' + s.w + 'x' + s.h + '.' + ext,
+                         data: dataUrlToBytes(res.url) });
+          done++; j++;
+          if (btn) btn.innerHTML = '<i class="fa fa-camera"></i> Exportando ' + done + '/' + total + '\u2026';
+          setTimeout(step, 50);
+        });
+      }, 60);
+    }
+    step();
+  }
+  var snapZip = document.getElementById('snap-zip');
+  if (snapZip) snapZip.addEventListener('click', exportTextsZip);
+
+  /* ------------------------------------------ exportar vídeo (bucle 4 s) */
+  function pickMime() {
+    if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) return false;
+    var cands = ['video/mp4;codecs=avc1.42E01E', 'video/mp4',
+                 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    for (var i = 0; i < cands.length; i++) if (MediaRecorder.isTypeSupported(cands[i])) return cands[i];
+    return 'video/webm';
+  }
+  // capa estática SIN canvas: 'under' = solo fondo; 'over' = texto con alfa
+  function makeLayer(targetFmt, w, h, mode, cb) {
+    var host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;z-index:-1;';
+    var clone = card.cloneNode(true);
+    clone.classList.remove('fmt-feed', 'fmt-portrait', 'fmt-reel');
+    clone.classList.add('fmt-' + targetFmt);
+    clone.classList.add(mode === 'under' ? 'rec-plain' : 'rec-nobg');
+    clone.style.cssText = 'position:relative;left:0;top:0;margin:0;border-radius:0;box-shadow:none;width:' + w + 'px;height:' + h + 'px;max-width:none;' +
+      (mode === 'over' ? 'background:transparent;' : '');
+    var cc = clone.querySelector('canvas');
+    if (cc && cc.parentNode) cc.parentNode.removeChild(cc);
+    if (mode === 'under') {
+      ['.topbar', '.headline', '.pills', '.cta', '.safezone', '.loading', '.err'].forEach(function (sel) {
+        var el = clone.querySelector(sel); if (el) el.style.visibility = 'hidden';
+      });
+    }
+    host.appendChild(clone); document.body.appendChild(host);
+    function cleanup() { if (host.parentNode) host.parentNode.removeChild(host); }
+    htmlToImage.toPng(clone, { pixelRatio: 1, cacheBust: true })
+      .then(function (url) { cleanup(); cb(null, url); })
+      .catch(function (e) { cleanup(); cb(e); });
+  }
+  function loadImg(src) {
+    return new Promise(function (res, rej) {
+      var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src;
+    });
+  }
+
+  var VIDEO_SECONDS = videoDur || 30;
+  var VIDEO_LABEL = '<i class="fa fa-camera"></i> Descargar v\u00EDdeo (' + VIDEO_SECONDS + ' s)';
+  function exportVideo() {
+    if (exporting) return;
+    if (window.promoRec && window.promoRec.getSource) { exportVideoElectron(VIDEO_SECONDS); return; }
+    var mime = pickMime();
+    if (!mime) { fail('Este navegador no permite grabar v\u00EDdeo (MediaRecorder/captureStream).'); return; }
+    exporting = true;
+    var btn = document.getElementById('snap-video');
+    var snap = document.getElementById('snap');
+    var snapAllBtn = document.getElementById('snap-all');
+    var zipBtn = document.getElementById('snap-zip');
+    [snap, snapAllBtn, zipBtn, btn].forEach(function (b) { if (b) b.disabled = true; });
+    function finishUp() {
+      exporting = false;
+      [snap, snapAllBtn, zipBtn].forEach(function (b) { if (b) b.disabled = false; });
+      if (btn) { btn.disabled = false; btn.innerHTML = VIDEO_LABEL; }
+    }
+    var targetFmt = fmt, ex = EXPORT[targetFmt], w = ex.w, h = ex.h;
+    if (videoVRes) { var vsc = videoVRes / Math.max(w, h); if (vsc < 1) { w = Math.round(w * vsc); h = Math.round(h * vsc); } }
+    var DUR = VIDEO_SECONDS, FPS = 30;
+    if (btn) btn.innerHTML = '<i class="fa fa-camera"></i> Preparando\u2026';
+
+    makeLayer(targetFmt, w, h, 'under', function (e1, underUrl) {
+      if (e1) { finishUp(); fail('No se pudo preparar el v\u00EDdeo: ' + (e1 && e1.message ? e1.message : e1)); return; }
+      makeLayer(targetFmt, w, h, 'over', function (e2, overUrl) {
+        if (e2) { finishUp(); fail('No se pudo preparar el v\u00EDdeo: ' + (e2 && e2.message ? e2.message : e2)); return; }
+        Promise.all([loadImg(underUrl), loadImg(overUrl)]).then(function (imgs) {
+          record(imgs[0], imgs[1]);
+        }).catch(function () { finishUp(); fail('No se pudieron cargar las capas del v\u00EDdeo.'); });
+      });
+    });
+
+    function record(under, over) {
+      var rc = document.createElement('canvas'); rc.width = w; rc.height = h;
+      var ctx = rc.getContext('2d');
+      var rec;
+      try {
+        rec = new MediaRecorder(rc.captureStream(FPS), { mimeType: mime, videoBitsPerSecond: 8000000 });
+      } catch (err) { finishUp(); fail('No se pudo iniciar la grabaci\u00F3n de v\u00EDdeo.'); return; }
+      var chunks = [];
+      rec.ondataavailable = function (ev) { if (ev.data && ev.data.size) chunks.push(ev.data); };
+      rec.onerror = function () { restore(); finishUp(); fail('Fall\u00F3 la grabaci\u00F3n de v\u00EDdeo.'); };
+      rec.onstop = function () {
+        var type = (rec.mimeType || mime).split(';')[0];
+        var extv = type.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+        var url = URL.createObjectURL(new Blob(chunks, { type: type }));
+        saveUrl(url, 'facturgest-video-' + targetFmt + '-' + w + 'x' + h + '.' + extv);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+        restore();
+        finishUp();
+      };
+
+      var snapScene = snapshotScene();
+      var savedRy = drag.tRy, savedRx = drag.tRx, savedFov = camGoalFov;
+      fmt = targetFmt;
+      renderer.setPixelRatio(1);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      applyLayout(true);
+      renderer.render(scene, camera);
+
+      function restore() {
+        restoreScene(snapScene);
+        drag.tRy = savedRy; drag.tRx = savedRx; camGoalFov = savedFov;
+        resize();
+        renderer.render(scene, camera);
+      }
+
+      rec.start();
+      var t0 = performance.now();
+      function frame() {
+        var t = (performance.now() - t0) / 1000;
+        if (t >= DUR) { rec.stop(); return; }
+        var k = t / DUR;
+        drag.tRy = savedRy + Math.sin(t * 0.9) * 0.05;               // vaiv\u00E9n
+        drag.tRx = savedRx + Math.sin(t * 0.6 + 1) * 0.012;
+        camGoalFov = camBaseFov - 1.2 - Math.sin(Math.PI * k) * 1.6; // acercamiento
+        renderer.render(scene, camera);
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(under, 0, 0, w, h);
+        ctx.drawImage(renderer.domElement, 0, 0, w, h);
+        var a = Math.min(1, t / 0.7); a = 1 - Math.pow(1 - a, 3);    // entrada del texto
+        ctx.globalAlpha = a;
+        ctx.drawImage(over, 0, 0, w, h);
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+  }
+
+  /* Graba la VENTANA de Electron (desktopCapturer) — píxeles compuestos
+     (DOM + WebGL) a la velocidad real, sin recomponer por frame en JS.
+     Sale mucho más suave que el path de canvas. */
+
+  // --- Director de escenas del vídeo -------------------------------------
+  // Cada escena elige QUÉ modelo se ve, su captura de pantalla (2D), si se
+  // muestra la UI/texto y el zoom. SIEMPRE un único equipo por plano: nunca uno
+  // pequeño detrás de otro, el equipo ocupa todo el espacio libre del encuadre.
+  // 6 planos de 5 s en 30 s, en rotación móvil → PC → móvil → tablet → PC →
+  // móvil. Los planos sin texto (ui:false) llenan el encuadre con la captura.
+  // En los formatos verticales el texto ocupa casi todo el ancho, así que ahí
+  // el equipo se encoje y se baja (fill.reel / fill.portrait) para no pisarlo.
+  var VIDEO_SCENES = [
+    { types: ['phone'],  screens: { phone: 'screns/mobile_1.png' },   ui: true,  zoom: 0.9,  head: 0,
+      fill: { reel: { w: 0.5, y: -0.12 } } },
+    { types: ['laptop'], screens: { laptop: 'screns/pc_screen.png' }, ui: false, zoom: 0.3 },
+    { types: ['phone'],  screens: { phone: 'screns/mobile_2.png' },   ui: true,  zoom: 0.9,  head: 1,
+      fill: { reel: { w: 0.5, y: -0.18 } } },
+    { types: ['tablet'], screens: { tablet: 'screns/tablet.jpeg' },   ui: false, zoom: 0.35 },
+    { types: ['laptop'], screens: { laptop: 'screns/pc_screen.png' }, ui: true,  zoom: 0.85, head: 3,
+      // El portátil es tan ancho que, a su tamaño normal, se solapa con el
+      // titular en feed y portrait (y el encaje por margen no lo evita: lo que
+      // sobra es hueco, no borde). Ahí se encoje con s y se corre a la derecha;
+      // en reel el texto va arriba y el equipo debajo, centrado y a tamaño
+      // completo.
+      fill: { feed: { s: 0.72, x: 0.42 }, portrait: { s: 0.66, x: 0.34, y: 0.10 },
+              reel: { w: 0.9, y: -0.06, center: true } } },
+    { types: ['phone'],  screens: { phone: 'screns/mobile_1.png' },   ui: true,  zoom: 0.9,  head: 7,
+      fill: { reel: { w: 0.5, y: -0.18 } } }
+  ];
+
+  function idOfType(type) {
+    var ids = Object.keys(devices);
+    for (var i = 0; i < ids.length; i++) if (devices[ids[i]].type === type) return ids[i];
+    return null;
+  }
+  function loadImgEl(src) {
+    return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = src; });
+  }
+
+  function exportVideoElectron(seconds) {
+    if (exporting) return;
+    exporting = true;
+    var btn = document.getElementById('snap-video');
+    var snap = document.getElementById('snap');
+    var snapAllBtn = document.getElementById('snap-all');
+    var zipBtn = document.getElementById('snap-zip');
+    [snap, snapAllBtn, zipBtn, btn].forEach(function (b) { if (b) b.disabled = true; });
+    if (btn) btn.innerHTML = '<i class="fa fa-camera"></i> Preparando\u2026';
+
+    var ex = EXPORT[fmt], w = ex.w, h = ex.h;
+    if (videoVRes) { var vsc = videoVRes / Math.max(w, h); if (vsc < 1) { w = Math.round(w * vsc); h = Math.round(h * vsc); } }
+    var DUR = seconds, mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+      .filter(function (m) { return MediaRecorder.isTypeSupported(m); })[0];
+    var savedRy = drag.tRy, savedRx = drag.tRx, savedFov = camGoalFov;
+    var savedHead = headlineIdx;
+    var hlEl = card.querySelector('.headline');
+
+    var N = Math.max(1, Math.min(VIDEO_SCENES.length, Math.round(DUR / 5)));
+    var SEG = DUR / N;
+    var stopped = false, lastScene = -1, sceneBaseX = 0;
+    var imgCache = {}, snapOrder = null, snapView = view, snapSel = sel, devState = {};
+
+    // --- Relevo sin borde --------------------------------------------------
+    // El texto se retira (clase .beat) y, cuando ya se ha ido, el equipo nuevo
+    // APARECE ya dentro del encuadre con un leve crecimiento de escala. No
+    // desliza desde fuera: ningún modelo cruza ni se corta con el borde en
+    // ningún formato, ni siquiera durante el cambio de plano. Como el anterior
+    // se oculta en el mismo instante, nunca se ven dos equipos a la vez.
+    var EXIT_MS = 260, ENTER_MS = 180;
+
+    function enterDev(d) {
+      if (!d || !d.pivot || !d.pivot.userData.goal) return;
+      var adj = M(d).adj || {};
+      d.pivot.scale.setScalar(Math.max(1e-3, d.pivot.userData.goal.s * (adj.sc || 1) * 0.9));
+    }
+
+    function transitionTo(i) {
+      if (stopped) return;
+      card.classList.add('beat');
+      setTimeout(function () {
+        if (stopped) return;
+        applyScene(VIDEO_SCENES[i], true);
+        setTimeout(function () { if (!stopped) card.classList.remove('beat'); }, ENTER_MS);
+      }, EXIT_MS);
+    }
+    function applyScene(sc, animate) {
+      var ids = sc.types.map(idOfType).filter(Boolean);
+      if (!ids.length) return;
+      var focus = (sc.focus && ids.indexOf(sc.focus) >= 0) ? sc.focus : ids[0];
+      view = focus; F().view = view; F().sel = (view !== 'all') ? view : null; sel = F().sel;
+      applyLayout(true);
+      // Un único equipo por plano, ocupando TODO el espacio libre: a pantalla
+      // completa cuando no hay texto y en su hueco (derecha) cuando lo hay.
+      var solo = ids.length === 1;
+      var clean = (sc.ui === false);
+      var fw = clean ? 0.92 : 0.54, fh = 0.74;
+      var fo = sc.fill && sc.fill[fmt];   // encaje específico por formato:
+      if (fo) { if (fo.w != null) fw = fo.w; if (fo.h != null) fh = fo.h; }
+                                         // w/h = huella del equipo sobre media
+                                         // anchura/altura del encuadre; x e y lo
+                                         // desplazan (en medias anchuras/alturas)
+                                         // para dejar libre la banda del texto;
+                                         // s lo encoje además (el margen SAFE no
+                                         // basta cuando lo que estorba es el
+                                         // texto, no el borde)
+      var center = solo && (sc.center === true || clean || (fo && fo.center));
+      var stg = LAYOUT[fmt].stage;
+      // El desplazamiento del stage para centrar el equipo se expresa en unidades
+      // del mundo (stage.position), no del propio stage.
+      sceneBaseX = center ? -activeSlots().hero.p[0] * stg.scale : 0;
+      stage.position.x = sceneBaseX;
+      // --- Encaje medido ---------------------------------------------------
+      // La caja 2D del modelo no basta para predecir el recorte: durante el plano
+      // la FOV se cierra (zoom + deriva), el stage panea, gira y sube y baja, y
+      // el modelo tiene fondo (eje z) que al girar ensancha su silueta. Así que
+      // en vez de estimar se MIDE: se coloca el equipo en las poses extremas de
+      // reposo del plano, se proyecta su caja con la misma cámara del render y se
+      // topean escala y posición hasta que la caja entera entre dentro del margen
+      // SAFE. Garantiza que ningún equipo toca el borde en ningún instante del
+      // plano, en feed, portrait y reel.
+      var SAFE = 0.90;                                        // 0 = centro, 1 = borde
+      var fovTight = camBaseFov - (sc.zoom || 0.6) - 0.5;     // FOV más cerrada del plano
+      var panHalf = (sc.pan != null ? sc.pan : 0.26) * 0.5;
+      var samples = [];
+      [-1, 0, 1].forEach(function (s) {
+        samples.push({ pan: s * panHalf, ry: savedRy + s * 0.07, rx: savedRx + s * 0.02, yb: s * 0.09 });
+        samples.push({ pan: s * panHalf, ry: savedRy - s * 0.07, rx: savedRx - s * 0.02, yb: -s * 0.09 });
+      });
+      var boxTmp = new THREE.Box3(), vTmp = new THREE.Vector3();
+
+      // caja que ocupa el equipo en pantalla (NDC), uniendo todas sus poses extremas
+      function projUnion(d, g, eff, adj) {
+        var keep = {
+          fov: camera.fov, sx: stage.position.x, sy: stage.position.y,
+          srx: stage.rotation.x, sry: stage.rotation.y, ssc: stage.scale.x,
+          px: d.pivot.position.x, py: d.pivot.position.y, pz: d.pivot.position.z,
+          rx: d.pivot.rotation.x, ry: d.pivot.rotation.y, rz: d.pivot.rotation.z,
+          ps: d.pivot.scale.x
+        };
+        var u = null;
+        for (var i = 0; i < samples.length; i++) {
+          var sm = samples[i];
+          camera.fov = fovTight; camera.updateProjectionMatrix();
+          stage.scale.setScalar(stg.scale);
+          stage.position.set(sceneBaseX + sm.pan, stg.y + sm.yb, 0);
+          stage.rotation.set(sm.rx, sm.ry, 0);
+          d.pivot.position.set(g.p[0], g.p[1], g.p[2] + (adj.dz || 0));
+          d.pivot.rotation.set(adj.rx || 0, g.ry + (adj.ry || 0), adj.rz || 0);
+          d.pivot.scale.setScalar(eff * (adj.sc || 1));
+          scene.updateMatrixWorld(true);
+          boxTmp.setFromObject(d.pivot);
+          var minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
+          for (var ix = 0; ix < 2; ix++) for (var iy = 0; iy < 2; iy++) for (var iz = 0; iz < 2; iz++) {
+            vTmp.set(ix ? boxTmp.max.x : boxTmp.min.x, iy ? boxTmp.max.y : boxTmp.min.y,
+                     iz ? boxTmp.max.z : boxTmp.min.z).project(camera);
+            if (vTmp.x < minx) minx = vTmp.x;
+            if (vTmp.x > maxx) maxx = vTmp.x;
+            if (vTmp.y < miny) miny = vTmp.y;
+            if (vTmp.y > maxy) maxy = vTmp.y;
+          }
+          u = u ? { minx: Math.min(u.minx, minx), maxx: Math.max(u.maxx, maxx),
+                    miny: Math.min(u.miny, miny), maxy: Math.max(u.maxy, maxy) }
+                : { minx: minx, maxx: maxx, miny: miny, maxy: maxy };
+        }
+        camera.fov = keep.fov; camera.updateProjectionMatrix();
+        stage.position.set(keep.sx, keep.sy, 0);
+        stage.rotation.set(keep.srx, keep.sry, 0);
+        stage.scale.setScalar(keep.ssc);
+        d.pivot.position.set(keep.px, keep.py, keep.pz);
+        d.pivot.rotation.set(keep.rx, keep.ry, keep.rz);
+        d.pivot.scale.setScalar(keep.ps);
+        return u;
+      }
+
+      ids.forEach(function (id) {
+        var d = devices[id];
+        if (!d || !d.pivot || !d.pivot.userData.goal) return;
+        var mm = M(d);
+        var adj = mm.adj || {};
+        var g = d.pivot.userData.goal;
+        var fr = frameHalf(g.p[2]);
+        var eff = fitScale(d, fw, fh);
+        if (sc.boost) eff *= sc.boost;
+        if (fo && fo.s) eff *= fo.s;
+        if (fo && (fo.x || fo.y)) {
+          g.p[0] += (fo.x || 0) * fr.w;
+          g.p[1] += (fo.y || 0) * fr.h;
+        }
+        // primero se encoje (si la caja no cabe ni centrada) y después se mete
+        // dentro del encuadre; cada pasada re-mide, así que converge sola.
+        for (var it = 0; it < 8; it++) {
+          var u = projUnion(d, g, eff, adj);
+          var rx = (u.maxx - u.minx) / 2, ry = (u.maxy - u.miny) / 2;
+          var cx = (u.minx + u.maxx) / 2, cy = (u.miny + u.maxy) / 2;
+          if (rx > SAFE || ry > SAFE) {
+            eff *= Math.min(SAFE / rx, SAFE / ry) * 0.985;
+            continue;
+          }
+          // Desplazamiento objetivo (en NDC): en los planos sin texto el equipo se
+          // CENTRA también en vertical (si no, LAYOUT lo baja para dejar sitio al
+          // texto y con el texto fuera queda pegado al borde de abajo); en los que
+          // llevan texto solo se mete dentro del margen.
+          var mvX = 0, mvY = 0;
+          if (clean) { mvX = -cx; mvY = -cy; }
+          else {
+            if (Math.abs(cx) + rx > SAFE + 1e-4) mvX = (SAFE - rx - Math.abs(cx)) * (cx >= 0 ? 1 : -1);
+            if (Math.abs(cy) + ry > SAFE + 1e-4) mvY = (SAFE - ry - Math.abs(cy)) * (cy >= 0 ? 1 : -1);
+          }
+          if (mvX === 0 && mvY === 0) break;
+          var tanh = Math.tan(fovTight * Math.PI / 360);
+          var dist = 10 - stg.scale * (g.p[2] + (adj.dz || 0));
+          g.p[0] += mvX * tanh * camera.aspect * dist / stg.scale;
+          g.p[1] += mvY * tanh * dist / stg.scale;
+        }
+        d._targetS = eff / (adj.sc || 1);
+        g.s = d._targetS;
+        // El reposo se fija en el MISMO instante: si no, el pivot seguiría el lerp
+        // desde la escala del slot (0.04) y el equipo tardaría ~0,5 s en crecer.
+        d.pivot.position.set(g.p[0], g.p[1], g.p[2] + (adj.dz || 0));
+        d.pivot.scale.setScalar(Math.max(1e-3, eff * (adj.sc || 1)));
+      });
+      Object.keys(devices).forEach(function (id) {
+        var d = devices[id]; if (d && d.pivot) d.pivot.visible = ids.indexOf(id) >= 0;
+      });
+      ids.forEach(function (id) {
+        var s = sc.screens && sc.screens[devices[id].type];
+        if (s && imgCache[s]) applyScreenshot(id, imgCache[s], s);
+      });
+      card.classList.toggle('clean', sc.ui === false);
+      if (sc.ui !== false && typeof sc.head === 'number') setHeadline(sc.head, false);
+      if (animate) ids.forEach(function (id) { enterDev(devices[id]); });
+    }
+    function restoreLook() {
+      stopped = true;
+      drag.tRy = savedRy; drag.tRx = savedRx; camGoalFov = savedFov;
+      card.classList.remove('clean');
+      card.classList.remove('beat');
+      if (hlEl) { hlEl.style.transition = ''; hlEl.style.opacity = ''; }
+      stage.position.x = 0;
+      if (snapOrder) {
+        F().order = snapOrder.slice(); view = snapView; sel = snapSel; F().view = snapView; F().sel = snapSel;
+      }
+      setHeadline(savedHead, false);
+      Object.keys(devState).forEach(function (id) {
+        var d = devices[id]; if (!d || !d.pivot) return;
+        if (devState[id].screen && d.screenSrc !== devState[id].screen) { try { applyScreenSrc(id, devState[id].screen); } catch (e) {} }
+      });
+      applyLayout(true);
+      Object.keys(devState).forEach(function (id) { var d = devices[id]; if (d && d.pivot) d.pivot.visible = devState[id].vis; });
+    }
+    function done() {
+      exporting = false;
+      [snap, snapAllBtn, zipBtn].forEach(function (b) { if (b) b.disabled = false; });
+      if (btn) { btn.disabled = false; btn.innerHTML = VIDEO_LABEL; }
+    }
+
+    (async function () {
+      try {
+        if (autorec) {
+          var need = ['phone', 'tablet', 'laptop'];
+          for (var ti = 0; ti < need.length; ti++) { if (!idOfType(need[ti])) await addDevice(need[ti]); }
+        }
+        var srcs = {};
+        VIDEO_SCENES.forEach(function (s) { if (s.screens) Object.keys(s.screens).forEach(function (t) { srcs[s.screens[t]] = 1; }); });
+        await Promise.all(Object.keys(srcs).map(function (s) {
+          return loadImgEl(s).then(function (im) { imgCache[s] = im; }).catch(function () {});
+        }));
+
+        var src = await window.promoRec.getSource();
+        if (!src) throw new Error('no se encontr\u00F3 la ventana para capturar');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var md = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { mandatory: { chromeMediaSource: 'desktop', chromeMediaSourceId: src, maxWidth: Math.round(w * dpr), maxHeight: Math.round(h * dpr), maxFrameRate: 30 } }
+        });
+        var stream = new MediaStream([md.getVideoTracks()[0]]);
+        var rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 14000000 });
+        var chunks = [];
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function () {
+          restoreLook();
+          var blob = new Blob(chunks, { type: 'video/webm' });
+          var fr = new FileReader();
+          fr.onload = function () {
+            window.promoRec.save('facturgest-' + fmt + '.webm', String(fr.result).split(',')[1]);
+            setTimeout(function () { try { window.close(); } catch (e) {} }, 400);
+          };
+          fr.readAsDataURL(blob);
+          done();
+        };
+
+        // instantánea del estado visual para restaurarlo al terminar
+        snapOrder = F().order.slice(); snapView = view; snapSel = sel; devState = {};
+        Object.keys(devices).forEach(function (id) { devState[id] = { vis: devices[id].pivot ? devices[id].pivot.visible : true, screen: devices[id].screenSrc }; });
+
+        rec.start(250);
+        // arranque: entra la primera escena (modelo + texto) con su animación
+        card.classList.add('beat');
+        applyScene(VIDEO_SCENES[0], true);
+        lastScene = 0;
+        var t0 = performance.now();
+        requestAnimationFrame(function () { if (!stopped) card.classList.remove('beat'); });
+        (function loop() {
+          var t = (performance.now() - t0) / 1000;
+          if (t >= DUR) { try { rec.stop(); } catch (e) {} return; }
+          var scene = Math.min(N - 1, Math.floor(t / SEG));
+          var k = SEG > 0 ? (t - scene * SEG) / SEG : 0;   // 0..1 dentro de la escena
+          var dir = (scene % 2 === 0) ? 1 : -1;
+          if (scene !== lastScene) { lastScene = scene; transitionTo(scene); }
+          var sc = VIDEO_SCENES[scene];
+          camGoalFov = camBaseFov - (sc.zoom || 0.6) - (0.25 + 0.25 * Math.sin(k * Math.PI));   // deriva suave
+          drag.tRy = savedRy + Math.sin(t * 0.5) * 0.04 + dir * 0.025 * (0.5 + 0.5 * Math.sin(k * Math.PI));
+          drag.tRx = savedRx + Math.sin(t * 0.4 + 1) * 0.012;
+          // paneo lateral: el equipo se desliza con suavidad dentro del plano
+          var panAmt = (sc.pan != null ? sc.pan : 0.26);
+          stage.position.x = sceneBaseX + dir * (k - 0.5) * panAmt;
+          requestAnimationFrame(loop);
+        })();
+      } catch (e) {
+        restoreLook();
+        done();
+        fail('No se pudo grabar en Electron: ' + (e && e.message ? e.message : e));
+      }
+    })();
+  }
+  var snapVideo = document.getElementById('snap-video');
+  if (snapVideo) snapVideo.addEventListener('click', exportVideo);
+
+
   function exportJSON() {
     try {
       var data = JSON.stringify(serialize(true), null, 2);
@@ -1325,7 +1968,7 @@
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.href = url;
-      a.download = 'diseno-app-promo.json';
+      a.download = 'diseno-facturgest.json';
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
     } catch (e) { fail('No se pudo guardar el JSON: ' + (e && e.message ? e.message : e)); }
@@ -1387,6 +2030,62 @@
   resize();
   applyLayout(true);
   tick();
+
+  /* --- hook de depuración (mide el encaje aparente de cada modelo) --- */
+  window.__facturgest = {
+    show: function (type) {
+      var id = null;
+      Object.keys(devices).forEach(function (k) { if (devices[k].type === type) id = k; });
+      if (id) { view = id; F().view = id; sel = id; F().sel = id; }
+      applyLayout(true);
+      return id;
+    },
+    solo: function (type, boost) {
+      var id = null;
+      Object.keys(devices).forEach(function (k) { if (devices[k].type === type) id = k; });
+      if (!id) return null;
+      view = id; F().view = id; sel = id; F().sel = id;
+      applyLayout(true);
+      stage.position.x = -activeSlots().hero.p[0];
+      Object.keys(devices).forEach(function (k) { if (devices[k].pivot) devices[k].pivot.visible = (k === id); });
+      if (boost && devices[id].pivot && devices[id].pivot.userData.goal) devices[id].pivot.userData.goal.s = (devices[id].slotS || 1) * boost;
+      return id;
+    },
+    boost: function (type, f) {
+      var id = null;
+      Object.keys(devices).forEach(function (k) { if (devices[k].type === type) id = k; });
+      if (id && devices[id].pivot && devices[id].pivot.userData.goal) devices[id].pivot.userData.goal.s = (devices[id].slotS || 1) * f;
+      return id;
+    },
+    info: function () {
+      return Object.keys(devices).map(function (id) {
+        var d = devices[id];
+        return { id: id, type: d.type,
+          vis: d.pivot ? d.pivot.visible : null,
+          scale: d.pivot ? +d.pivot.scale.x.toFixed(4) : null,
+          goalS: (d.pivot && d.pivot.userData.goal) ? +d.pivot.userData.goal.s.toFixed(4) : null,
+          w: +(2 * d.half.x).toFixed(4), h: +(2 * d.half.y).toFixed(4),
+          screenH: d.pivot ? +(d.pivot.scale.x * 2 * d.half.y).toFixed(4) : null };
+      });
+    },
+    state: function () { return { view: view, order: F().order.slice(), design: design, fmt: fmt }; },
+    fmt: function () { return fmt; }
+  };
+
+  // Grabación automática de la ventana (Electron): modo limpio y arranque
+  // cuando el 3D ya está cargado.
+  if (autorec && window.promoRec) {
+    document.body.classList.add('rec');
+    card.classList.remove('fmt-feed', 'fmt-portrait', 'fmt-reel');
+    card.classList.add('fmt-' + fmt);
+    resize(); applyLayout(true);
+    var waited = 0;
+    (function waitReady() {
+      if (loading.style.display === 'none' || waited > 15000) {
+        setTimeout(function () { exportVideoElectron(VIDEO_SECONDS); }, 600);
+      } else { waited += 200; setTimeout(waitReady, 200); }
+    })();
+  }
 })();
 
 

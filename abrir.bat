@@ -1,5 +1,5 @@
 @echo off
-rem Abre la promo Cyber Monday con modelos 3D reales (requiere servidor local).
+rem Abre el servidor local con las dos promos (Resto y FactuGest).
 cd /d "%~dp0"
 where python >nul 2>nul
 if errorlevel 1 (
@@ -8,5 +8,6 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-start "" "http://localhost:8000/v2.html"
+start "" "http://localhost:8000/resto/v2.html"
+start "" "http://localhost:8000/facturgest/v2.html"
 python serve.py

@@ -17,5 +17,8 @@ class Server(socketserver.ThreadingTCPServer):
 
 if __name__ == "__main__":
     with Server(("", 8000), NoCacheHandler) as httpd:
-        print("Servidor en http://localhost:8000/v2.html  (Ctrl+C para salir)")
+        print("App promo:")
+        print("  Resto:      http://localhost:8000/resto/v2.html")
+        print("  FactuGest:  http://localhost:8000/facturgest/v2.html")
+        print("(Ctrl+C para salir)")
         httpd.serve_forever()
