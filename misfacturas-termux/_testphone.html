@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(125% 78% at 50% 4%,#16161b 0%,#0b0b0d 58%)}
+#gl{position:absolute;inset:0;display:block}
+</style></head><body>
+<canvas id="gl"></canvas>
+<pre id="log" style="position:absolute;left:20px;top:20px;color:#0f0;font:20px monospace;z-index:9;white-space:pre-wrap"></pre>
+<script>window.onerror=function(m,u,l){var e=document.getElementById("log");if(e)e.textContent+="\nERR "+m+" @"+l;};</script>
+<script src="libs/three.min.js"></script>
+<script src="libs/GLTFLoader.js"></script>
+<script>
+(function(){
+  var W=1080,H=1920;
+  var renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,alpha:true});
+  renderer.setPixelRatio(1); renderer.setSize(540,960,false); var glc=document.getElementById('gl'); glc.style.width='1080px'; glc.style.height='1920px';
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
+  var scene=new THREE.Scene();
+  var cam=new THREE.PerspectiveCamera(30,W/H,0.1,100);
+  cam.position.set(0,0,3.6);
+
+  // entorno simple (reflejos)
+  var ec=document.createElement('canvas'); ec.width=1024; ec.height=512;
+  var ex=ec.getContext('2d');
+  var g=ex.createLinearGradient(0,0,0,512);
+  g.addColorStop(0,'#6b7280'); g.addColorStop(.42,'#2a2a31'); g.addColorStop(.62,'#101014'); g.addColorStop(1,'#050506');
+  ex.fillStyle=g; ex.fillRect(0,0,1024,512);
+  var rg=ex.createRadialGradient(300,120,10,300,120,220);
+  rg.addColorStop(0,'rgba(255,255,255,.95)'); rg.addColorStop(1,'rgba(255,255,255,0)');
+  ex.fillStyle=rg; ex.fillRect(0,0,1024,512);
+  var rg2=ex.createRadialGradient(800,190,10,800,190,260);
+  rg2.addColorStop(0,'rgba(255,170,80,.55)'); rg2.addColorStop(1,'rgba(255,170,80,0)');
+  ex.fillStyle=rg2; ex.fillRect(0,0,1024,512);
+  var envTex=new THREE.Texture(ec); envTex.mapping=THREE.EquirectangularReflectionMapping;
+  envTex.encoding=THREE.sRGBEncoding; envTex.needsUpdate=true;
+  scene.environment=envTex;
+
+  scene.add(new THREE.HemisphereLight(0xffffff,0x1a1a20,1.4));
+  var d1=new THREE.DirectionalLight(0xffffff,2.2); d1.position.set(-3,4,5); scene.add(d1);
+  var d2=new THREE.DirectionalLight(0xff9a45,1.4); d2.position.set(4,-2,3); scene.add(d2);
+  var d3=new THREE.DirectionalLight(0x9db8ff,.9); d3.position.set(0,-4,-3); scene.add(d3);
+
+  var pivot=new THREE.Group(); scene.add(pivot);
+
+  function prep(root, matRe){
+    var screen=null;
+    root.updateWorldMatrix(true,true);
+    root.traverse(function(o){ if(!o.isMesh||!o.material)return; if(o.material.name&&matRe.test(o.material.name)) screen=o; });
+    var whole=new THREE.Box3().setFromObject(root);
+    var cAll=whole.getCenter(new THREE.Vector3());
+    if(screen){ var sc=new THREE.Box3().setFromObject(screen).getCenter(new THREE.Vector3()); if(sc.z<cAll.z){ root.rotateY(Math.PI); root.userData.flipX=true; } }
+    root.updateWorldMatrix(true,true);
+    var box=new THREE.Box3().setFromObject(root); var size=box.getSize(new THREE.Vector3());
+    var maxDim=Math.max(size.x,size.y,size.z)||1; root.scale.multiplyScalar(1/maxDim);
+    root.updateWorldMatrix(true,true);
+    var box2=new THREE.Box3().setFromObject(root); var c2=box2.getCenter(new THREE.Vector3());
+    root.position.sub(c2);
+    root.userData.screen=screen;
+    if(screen&&screen.geometry&&screen.geometry.attributes&&screen.geometry.attributes.uv){
+      var uv=screen.geometry.attributes.uv,uMin=Infinity,uMax=-Infinity,vMin=Infinity,vMax=-Infinity;
+      for(var i=0;i<uv.count;i++){var u=uv.getX(i),v=uv.getY(i); if(u<uMin)uMin=u;if(u>uMax)uMax=u;if(v<vMin)vMin=v;if(v>vMax)vMax=v;}
+      root.userData.screenUV={uMin:uMin,uMax:uMax,vMin:vMin,vMax:vMax};
+    }
+    return screen;
+  }
+  function apply(dev,img){
+    if(!dev||!dev.screen) return;
+    var tex=new THREE.Texture(img); tex.flipY=false; tex.encoding=THREE.sRGBEncoding;
+    tex.anisotropy=1; tex.needsUpdate=true;
+    var uv=dev.root.userData.screenUV,ru=1,rv=1,ou=0,ov=0;
+    if(uv&&uv.uMax>uv.uMin&&uv.vMax>uv.vMin){ ru=1/(uv.uMax-uv.uMin); rv=1/(uv.vMax-uv.vMin); ou=-uv.uMin*ru; ov=-uv.vMin*rv; tex.wrapS=tex.wrapT=THREE.RepeatWrapping; }
+    if(dev.root.userData.flipX){ ou=uv?uv.uMax*ru:1; ru=-ru; }
+    tex.repeat.set(ru,rv); tex.offset.set(ou,ov);
+    dev.screen.material=new THREE.MeshBasicMaterial({map:tex,toneMapped:false});
+  }
+  var dev={root:null,screen:null};
+  new THREE.GLTFLoader().load('models/apple_iphone_18_pro_max_black_2026.glb',function(g){
+    var root=g.scene;
+    root.traverse(function(o){ if(o.isMesh&&o.material){ o.material.envMapIntensity=1.2; }});
+    dev.screen=prep(root,/screen/i); dev.root=root; root.traverse(function(o){if(!o.isMesh||o===dev.screen||!o.material)return;var ms=Array.isArray(o.material)?o.material:[o.material];var out=ms.map(function(m){return new THREE.MeshPhongMaterial({color:m.color?m.color.clone():new THREE.Color(0x0a0a0c),map:m.map||null,specular:new THREE.Color(0x777777),shininess:90,side:m.side});});o.material=Array.isArray(o.material)?out:out[0];});
+    pivot.add(root);
+    var img=new Image();
+    img.onload=function(){ apply(dev,img); window.INFO={ok:true, screen:!!dev.screen, name:dev.screen&&dev.screen.name, mat:dev.screen&&dev.screen.material&&dev.screen.material.name, pivo:dev.root&&dev.root.position.toArray(), bbox:(function(){var b=new THREE.Box3().setFromObject(dev.root);return [b.min.toArray(),b.max.toArray()];})()}; document.getElementById('log').textContent=JSON.stringify(window.INFO); window.PROMO_READY=true; };
+    img.onerror=function(){ window.INFO={ok:false,err:'img'}; document.getElementById('log').textContent=JSON.stringify(window.INFO); window.PROMO_READY=true; };
+    img.src='screens/phone-web-empsaat.png';
+  },undefined,function(e){ window.INFO={ok:false,err:String(e)}; document.getElementById('log').textContent='LOADERR '+String(e); window.PROMO_READY=true; });
+
+  // posicion y giro
+  pivot.scale.setScalar(1.42);
+  pivot.position.set(0,-0.20,0);
+  var t0=performance.now();
+  var last=performance.now(), frames=0, acc=0;
+  function loop(){
+    var now=performance.now();
+    var dt=now-last; last=now; if(dt<1000){acc+=dt;frames++;}
+    var t=(now-t0)/1000;
+    pivot.rotation.set(0.055+Math.sin(t*0.75)*0.02, -0.21+Math.sin(t*0.9)*0.04, -0.012+Math.sin(t*0.6)*0.01);
+    pivot.position.y=-0.20+Math.sin(t*1.1)*0.008;
+    renderer.render(scene,cam);
+    if(frames%5===0){
+      var avg=acc/frames;
+      var el=document.getElementById('log');
+      if(el && window.PROMO_READY) el.textContent=(1000/avg).toFixed(1)+' fps · '+avg.toFixed(0)+' ms · tris '+renderer.info.render.triangles+' · calls '+renderer.info.render.calls;
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script></body></html>

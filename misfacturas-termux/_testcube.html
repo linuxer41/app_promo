@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><head><style>html,body{margin:0;background:#0b0b0d;overflow:hidden}canvas{display:block}</style></head><body>
+<canvas id="c"></canvas>
+<script src="libs/three.min.js"></script>
+<script>
+var W=1080,H=1920,c=document.getElementById('c');
+var r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:false});
+r.setPixelRatio(1);r.setSize(W,H,false);c.style.width=W+'px';c.style.height=H+'px';
+var s=new THREE.Scene();s.background=new THREE.Color(0x223344);
+var cam=new THREE.PerspectiveCamera(50,W/H,0.1,100);cam.position.z=4;
+s.add(new THREE.HemisphereLight(0xffffff,0x222222,1));
+var m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0xff8800}));
+s.add(m);
+(function loop(){m.rotation.x+=0.01;m.rotation.y+=0.013;r.render(s,cam);requestAnimationFrame(loop);})();
+</script></body></html>

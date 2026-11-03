@@ -1,0 +1,4 @@
+/* Capa WebGL del móvil real. El resto (tipografía, portada, cierre, puntos)
+   reutiliza present.css. */
+#gl{position:absolute;inset:0;width:1080px;height:1920px;display:block;z-index:2;
+  pointer-events:none}

@@ -1,0 +1,12 @@
+{
+  "name": "misfacturas-termux",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vídeo de Mis Facturas renderizado con Termux (Chromium headless + ffmpeg)",
+  "scripts": {
+    "start": "node serve.mjs",
+    "render": "node render.mjs",
+    "test": "node render.mjs --frames=30 --no-music"
+  }
+}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mis Facturas · presentación 3D para Termux</title>
+<link rel="stylesheet" href="css/present.css" />
+<link rel="stylesheet" href="css/present3d.css" />
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="halo"></div>
+  <canvas id="gl" width="1080" height="1920"></canvas>
+
+  <header class="brand">
+    <img src="screens/icono.png" alt="" />
+    <span>Mis Facturas</span>
+  </header>
+
+  <div class="dots" id="dots"></div>
+
+  <main id="track"></main>
+
+  <div class="preview-note" id="note"></div>
+</div>
+<script src="libs/three.min.js"></script>
+<script src="libs/GLTFLoader.js"></script>
+<script src="js/present3d.js"></script>
+</body>
+</html>
