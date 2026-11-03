@@ -28,8 +28,12 @@ resto-*.png
 resto-*.jpg
 facturgest-*.png
 facturgest-*.jpg
-resto/video-out/
-facturgest/video-out/
+# Los .mp4 finales van al repo; los .webm no, son el volcado del MediaRecorder
+# antes del remux a h264 (≈35 MB cada uno) y se regeneran con record.mjs.
+resto/video-out/*
+facturgest/video-out/*
+!resto/video-out/*.mp4
+!facturgest/video-out/*.mp4
 
 # Fuentes de diseño pesados: GitHub corta la subida por HTTPS/SSH alrededor de
 # los 50 MB, así que estos archivos se quedan solo en disco.
