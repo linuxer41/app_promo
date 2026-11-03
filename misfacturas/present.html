@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mis Facturas · presentación de la app</title>
+<link rel="stylesheet" href="css/present.css" />
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="halo"></div>
+
+  <header class="brand">
+    <img src="screens/icono.png" alt="" />
+    <span>Mis Facturas</span>
+  </header>
+
+  <div class="dots" id="dots"></div>
+
+  <main id="track"></main>
+
+  <!-- Solo para la vista de trabajo en el navegador: la grabación la lanza
+       Electron con ?autorec=1 y no pinta este aviso. -->
+  <div class="preview-note" id="note"></div>
+</div>
+<script src="js/present.js"></script>
+</body>
+</html>

@@ -20,5 +20,6 @@ if __name__ == "__main__":
         print("App promo:")
         print("  Resto:      http://localhost:8000/resto/v2.html")
         print("  FactuGest:  http://localhost:8000/facturgest/v2.html")
+        print("  Mis Facturas: http://localhost:8000/misfacturas/present.html")
         print("(Ctrl+C para salir)")
         httpd.serve_forever()
