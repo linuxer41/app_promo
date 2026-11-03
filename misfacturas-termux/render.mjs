@@ -1,4 +1,5 @@
-// Graba la presentación de Mis Facturas en Termux, sin Electron.
+// Graba la presentación de Mis Facturas con Chromium headless + ffmpeg, sin
+// Electron ni MediaRecorder (funciona en Termux y en Windows/macOS/Linux).
 //
 // Chromium headless recibe un tiempo (renderAt(t)) por cada cuadro, se captura
 // con CDP y los PNG se mandan en vivo a ffmpeg. Después se añade la música.
@@ -8,13 +9,14 @@
 //   node render.mjs --frames=60           -> prueba corta
 //   node render.mjs --no-music
 //
-// Requiere: node, ffmpeg y chromium (pkg install x11-repo && pkg install chromium).
+// Requiere node, ffmpeg y un Chromium: en Termux `pkg install chromium`; en
+// Windows busca Chrome o Edge donde vienen instalados (o CHROMIUM_BIN).
 import { spawn } from 'node:child_process';
 import { accessSync, constants, existsSync } from 'node:fs';
 import { mkdtemp, mkdir, rename, rm, unlink } from 'node:fs/promises';
 import { createServer as createNetServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startStaticServer } from './server.mjs';
 
@@ -59,16 +61,47 @@ const FFMPEG = process.env.FFMPEG_BIN || 'ffmpeg';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const IS_WIN = process.platform === 'win32';
+// En Windows un nombre sin extensión rara vez es ejecutable: PATH trae .exe.
+const EXE_SUFFIXES = IS_WIN ? ['', '.exe', '.cmd', '.bat'] : [''];
+
+function isExecutable(p) {
+  try {
+    accessSync(p, constants.X_OK);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
 function which(cmd) {
   if (!cmd) return null;
-  if (cmd.includes('/')) return existsSync(cmd) ? cmd : null;
-  for (const dir of (process.env.PATH || '').split(':')) {
+  if (cmd.includes('/') || cmd.includes('\\')) {
+    for (const suffix of EXE_SUFFIXES) {
+      const p = cmd + suffix;
+      if (existsSync(p) && isExecutable(p)) return p;
+    }
+    return null;
+  }
+  for (const dir of (process.env.PATH || '').split(delimiter)) {
     if (!dir) continue;
-    const p = join(dir, cmd);
-    try { accessSync(p, constants.X_OK); return p; } catch (err) {}
+    for (const suffix of EXE_SUFFIXES) {
+      const p = join(dir, cmd + suffix);
+      if (existsSync(p) && isExecutable(p)) return p;
+    }
   }
   return null;
 }
+
+// Rutas habituales donde Chrome y Edge se instalan solos en Windows.
+const WINDOWS_CHROMIUM = [
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  join(process.env.LOCALAPPDATA || '', 'Google/Chrome/Application/chrome.exe'),
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+  join(process.env.LOCALAPPDATA || '', 'Microsoft/Edge/Application/msedge.exe')
+];
 
 function findChromium() {
   const names = [process.env.CHROMIUM_BIN, 'chromium', 'chromium-browser',
@@ -76,6 +109,9 @@ function findChromium() {
   for (const n of names) {
     const p = which(n);
     if (p) return p;
+  }
+  for (const p of WINDOWS_CHROMIUM) {
+    if (p && existsSync(p)) return p;
   }
   return null;
 }
@@ -183,15 +219,16 @@ async function main() {
   const chromium = findChromium();
   const ffmpeg = findFfmpeg();
   if (!chromium) {
-    console.error('✖ No encontré Chromium.\n' +
-      '  Instálalo en Termux con:\n' +
-      '    pkg install -y x11-repo\n' +
-      '    pkg install -y chromium\n' +
-      '  O define CHROMIUM_BIN=/ruta/al/chromium');
+    console.error('✖ No encontré un navegador Chromium.\n' +
+      '  Termux:   pkg install -y x11-repo && pkg install -y chromium\n' +
+      '  Windows:  ten Chrome o Edge instalados, o define\n' +
+      '            set CHROMIUM_BIN=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe');
     process.exit(1);
   }
   if (!ffmpeg) {
-    console.error('✖ No encontré ffmpeg. Instálalo con: pkg install -y ffmpeg');
+    console.error('✖ No encontré ffmpeg.\n' +
+      '  Termux:   pkg install -y ffmpeg\n' +
+      '  Windows:  instalalo (winget install ffmpeg) o define FFMPEG_BIN=C:\\ruta\\ffmpeg.exe');
     process.exit(1);
   }
   if (withMusic && !existsSync(music)) {
@@ -208,7 +245,9 @@ async function main() {
   const srv = await startStaticServer({ root: HERE, port: 0 });
   const port = await freePort();
   const chromeArgs = [
-    '--headless',
+    // El modo headless antiguo ya no existe en los Chrome de escritorio; en
+    // Termux el chromium empaquetado sigue aceptando '--headless' a secas.
+    IS_WIN ? '--headless=new' : '--headless',
     '--no-sandbox',
     ...(process.env.DISABLE_GPU === '0' ? [] : ['--disable-gpu']),
     '--disable-dev-shm-usage',

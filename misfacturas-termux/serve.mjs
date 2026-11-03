@@ -1,4 +1,4 @@
-// Servidor local para ver la presentación en el navegador de Android.
+// Servidor local para ver la presentación en el navegador.
 //
 //   node serve.mjs              -> http://127.0.0.1:8080/ y abre el navegador
 //   node serve.mjs --port=9000  -> otro puerto
@@ -23,13 +23,19 @@ console.log('  ' + srv.url);
 console.log('  Ctrl+C para salir');
 
 if (!noOpen) {
-  const cmd = process.env.TERMUX_OPEN || 'termux-open-url';
-  try {
-    const child = spawn(cmd, [srv.url], { stdio: 'ignore', detached: true });
-    child.on('error', () => {});
-    child.unref();
-  } catch (err) {
-    // sin termux-open-url: abre la URL a mano
+  // Termux tiene su propio lanzador; en Windows se usa el asociado a http://.
+  const open = process.env.TERMUX_OPEN
+    || (process.platform === 'win32' ? ['cmd', ['/c', 'start', '', srv.url]]
+      : process.platform === 'darwin' ? ['open', [srv.url]]
+      : ['xdg-open', [srv.url]]);
+  if (open) {
+    try {
+      const child = spawn(open[0], open[1], { stdio: 'ignore', detached: true });
+      child.on('error', () => {});
+      child.unref();
+    } catch (err) {
+      // sin lanzador: abre la URL a mano
+    }
   }
 }
 
